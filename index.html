@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KetchupGame Downloads</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial,sans-serif;
+}
+
+body{
+  background:#0d0f1c;
+  color:white;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+}
+
+.bg{
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at top left,#ffcc0030,transparent 40%),
+    radial-gradient(circle at bottom right,#ff330030,transparent 40%),
+    linear-gradient(135deg,#13152a,#090a12);
+}
+
+.card{
+  position:relative;
+  width:920px;
+  max-width:95%;
+  background:rgba(20,20,35,0.92);
+  border-radius:30px;
+  padding:40px;
+  border:1px solid rgba(255,255,255,0.08);
+  backdrop-filter:blur(14px);
+  box-shadow:0 0 45px rgba(0,0,0,0.5);
+}
+
+.logo{
+  text-align:center;
+  font-size:54px;
+  font-weight:900;
+  margin-bottom:10px;
+  background:linear-gradient(90deg,#ffd000,#ff8800);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.subtitle{
+  text-align:center;
+  color:#b6bbff;
+  margin-bottom:38px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:22px;
+}
+
+.box{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:24px;
+  padding:24px;
+  transition:0.25s;
+}
+
+.box:hover{
+  transform:translateY(-5px);
+  border-color:#ffcc00;
+  box-shadow:0 10px 28px rgba(255,204,0,0.14);
+}
+
+.box h2{
+  font-size:28px;
+  margin-bottom:12px;
+}
+
+.box p{
+  color:#d0d0de;
+  margin-bottom:18px;
+}
+
+.btn{
+  width:100%;
+  display:block;
+  text-align:center;
+  padding:14px;
+  border-radius:14px;
+  font-weight:bold;
+  text-decoration:none;
+  transition:0.2s;
+}
+
+.enabled{
+  background:linear-gradient(90deg,#ffcc00,#ff8800);
+  color:black;
+}
+
+.enabled:hover{
+  transform:scale(1.03);
+}
+
+.disabled{
+  background:#44485c;
+  color:#969cb3;
+  cursor:not-allowed;
+  pointer-events:none;
+}
+
+.footer{
+  margin-top:35px;
+  text-align:center;
+  color:#747b98;
+  font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+
+<div class="card">
+
+  <div class="logo">KETCHUPGAME</div>
+
+  <div class="subtitle">
+    Download the latest version
+  </div>
+
+  <div class="grid">
+
+    <div class="box">
+      <h2>🪟 Windows</h2>
+      <p>KetchupGame.exe</p>
+
+      <a id="exeBtn" class="btn disabled">
+        Not Available
+      </a>
+    </div>
+
+    <div class="box">
+      <h2>🍎 macOS</h2>
+      <p>KetchupGame.dmg</p>
+
+      <a id="dmgBtn" class="btn disabled">
+        Not Available
+      </a>
+    </div>
+
+    <div class="box">
+      <h2>🤖 Android</h2>
+      <p>KetchupGame.apk</p>
+
+      <a id="apkBtn" class="btn disabled">
+        Not Available
+      </a>
+    </div>
+
+    <div class="box">
+      <h2>🐧 Linux</h2>
+      <p>KetchupGame.AppImage</p>
+
+      <a id="linuxBtn" class="btn disabled">
+        Not Available
+      </a>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Files automatically detected from this folder
+  </div>
+
+</div>
+
+<script>
+function setupButton(id, fileName, text){
+
+  const btn = document.getElementById(id)
+
+  fetch(fileName,{method:"HEAD"})
+    .then(res => {
+
+      if(res.ok){
+
+        btn.classList.remove("disabled")
+        btn.classList.add("enabled")
+
+        btn.href = fileName
+        btn.download = ""
+
+        btn.innerText = text
+      }
+
+    })
+}
+
+setupButton(
+  "exeBtn",
+  "KetchupGame.exe",
+  "Download EXE"
+)
+
+setupButton(
+  "dmgBtn",
+  "KetchupGame.dmg",
+  "Download DMG"
+)
+
+setupButton(
+  "apkBtn",
+  "KetchupGame.apk",
+  "Download APK"
+)
+
+setupButton(
+  "linuxBtn",
+  "KetchupGame.AppImage",
+  "Download Linux"
+)
+</script>
+
+</body>
+</html>
