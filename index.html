@@ -1,160 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KetchupGame</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KetchupGame</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red-main: #e62e2e;
+            --red-dark: #b31d1d;
+            --red-light: #fff5f5;
+            --text-main: #2d0a0a;
+            --border-color: #ffcccc;
+        }
 
-*{ margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Fredoka', sans-serif;
+        }
 
-body{
-  background:#05060f;
-  color:white;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  overflow-x:hidden;
-}
+        body {
+            background-color: #ffffff;
+            background-image: linear-gradient(var(--red-light) 2px, transparent 2px), 
+                              linear-gradient(90deg, var(--red-light) 2px, transparent 2px);
+            background-size: 40px 40px;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-.bg{
-  position:fixed;
-  inset:0;
-  background: radial-gradient(circle at 20% 30%, #ffcc0015, transparent 40%),
-              radial-gradient(circle at 80% 70%, #ff440015, transparent 40%);
-  z-index: -1;
-}
+        /* --- TOPBAR --- */
+        nav {
+            width: 100%;
+            height: 70px;
+            background: #ffffff;
+            border-bottom: 3px solid var(--red-main);
+            display: flex;
+            align-items: center;
+            padding: 0 8%;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
 
-.card{
-  position:relative;
-  width:900px;
-  max-width:95%;
-  background:rgba(15, 17, 32, 0.85);
-  border-radius:40px;
-  padding:60px 40px;
-  border:1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter:blur(20px);
-  box-shadow:0 25px 80px rgba(0,0,0,0.6);
-  text-align: center;
-  animation: fadeIn 0.8s ease-out;
-}
+        .refresh-btn {
+            background: none;
+            border: 2px solid var(--red-main);
+            color: var(--red-main);
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+        .refresh-btn:hover {
+            background: var(--red-main);
+            color: white;
+            transform: translateY(-1px);
+        }
 
-.logo{
-  font-size:64px;
-  font-weight:900;
-  letter-spacing: -2px;
-  margin-bottom:10px;
-  background:linear-gradient(90deg,#ffd000,#ff4400);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
+        /* --- CONTENT --- */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 40px 10%;
+        }
 
-.subtitle { color:#b6bbff; margin-bottom:40px; font-size: 1.1rem; }
+        .hero h1 {
+            font-size: clamp(1.8rem, 6vw, 3rem);
+            font-weight: 600;
+            line-height: 1.2;
+            color: var(--text-main);
+            margin-bottom: 50px;
+            max-width: 900px;
+        }
 
-.grid{
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap:25px;
-  margin-top: 30px;
-}
+        /* --- DOWNLOADS --- */
+        .dl-wrap {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-.box{
-  background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:24px;
-  padding:35px;
-  transition: all 0.3s ease;
-}
+        .download-box {
+            text-decoration: none;
+            width: 260px;
+            background: white;
+            padding: 35px 20px;
+            border-radius: 30px;
+            border: 3px solid var(--red-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 8px 8px 0px var(--red-main);
+        }
 
-.box:hover{
-  transform:translateY(-8px);
-  background: rgba(255, 255, 255, 0.06);
-  border-color:#ffcc00;
-}
+        .download-box:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 12px 12px 0px var(--red-dark);
+        }
 
-.btn{
-  display:block;
-  width:100%;
-  padding:15px;
-  margin-top:20px;
-  border-radius:14px;
-  font-weight:bold;
-  text-decoration:none;
-  background:linear-gradient(135deg,#ffcc00,#ff8800);
-  color:black;
-  transition:0.3s;
-}
+        .download-box:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--red-dark);
+        }
 
-.btn:hover{
-  transform:scale(1.05);
-  box-shadow: 0 10px 20px rgba(255, 136, 0, 0.3);
-}
+        .platform {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 10px;
+        }
 
-.info-text {
-  margin-top: 15px;
-  font-size: 0.85rem;
-  color: #747b98;
-}
-</style>
+        .btn-text {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--red-main);
+        }
+
+        /* Special style for Windows to make it "Pop" */
+        .download-box.exe {
+            background: var(--red-main);
+        }
+        .download-box.exe .btn-text { color: white; }
+        .download-box.exe .platform { color: rgba(255,255,255,0.7); }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.6rem; }
+            .download-box { width: 100%; max-width: 300px; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="bg"></div>
+    <nav>
+        <button class="refresh-btn" onclick="window.location.reload()">KETCHUPGAME</button>
+    </nav>
 
-<div class="card">
-  <div class="logo">KETCHUPGAME</div>
-  <p class="subtitle">The ultimate social experience. Walk, chat, and meet new people.</p>
+    <main class="hero">
+        <h1>Walk in a boring 2D world, host a world, or join a friends one.</h1>
 
-  <div class="grid">
-    <div class="box">
-      <h2>Desktop Version</h2>
-      <p class="info-text">Windows & Mac Compatible</p>
-      <a href="https://drive.google.com/uc?export=download&id=1VwoXJYfd_XdTDV-ZhcxgNztpgeWkDO6U" 
-         target="_blank" 
-         class="btn" 
-         onclick="showStatus(this)">
-         Download Game
-      </a>
-    </div>
+        <div class="dl-wrap">
+            <a href="https://drive.google.com/uc?export=download&id=1VwoXJYfd_XdTDV-ZhcxgNztpgeWkDO6U" target="_blank" class="download-box exe">
+                <span class="platform">Desktop</span>
+                <span class="btn-text">Download EXE</span>
+            </a>
 
-    <div class="box">
-      <h2>Mobile Version</h2>
-      <p class="info-text">Android Installation (APK)</p>
-      <a href="https://drive.google.com/uc?export=download&id=124jTvRbnlAI-TnNQQu8bHSGiFxk9xwDU" 
-         target="_blank" 
-         class="btn" 
-         onclick="showStatus(this)">
-         Download APK
-      </a>
-    </div>
-  </div>
-
-  <div id="status" style="margin-top:30px; color:#ffcc00; font-weight:bold; display:none;">
-    Download started! Check your browser's downloads.
-  </div>
-
-  <p style="margin-top:40px; color:#5a5e73; font-size:12px;">
-    Note: If the file is large, Google may ask for a virus scan confirmation.
-  </p>
-</div>
-
-<script>
-function showStatus(btn) {
-  const status = document.getElementById('status');
-  status.style.display = 'block';
-  btn.innerText = "Opening Download...";
-  setTimeout(() => {
-    btn.innerText = "Download Again";
-  }, 3000);
-}
-</script>
+            <a href="https://drive.google.com/uc?export=download&id=124jTvRbnlAI-TnNQQu8bHSGiFxk9xwDU" target="_blank" class="download-box">
+                <span class="platform">Apple</span>
+                <span class="btn-text">Download DMG</span>
+            </a>
+        </div>
+    </main>
 
 </body>
 </html>
