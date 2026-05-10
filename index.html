@@ -11,7 +11,6 @@
             --red-dark: #b31d1d;
             --red-light: #fff5f5;
             --text-main: #2d0a0a;
-            --border-color: #ffcccc;
         }
 
         * {
@@ -77,7 +76,7 @@
         }
 
         .hero h1 {
-            font-size: clamp(1.8rem, 6vw, 3rem);
+            font-size: clamp(1.8rem, 6vw, 2.8rem);
             font-weight: 600;
             line-height: 1.2;
             color: var(--text-main);
@@ -85,27 +84,105 @@
             max-width: 900px;
         }
 
-        /* --- DOWNLOADS --- */
-        .dl-wrap {
+        /* --- BUTTONS --- */
+        .ui-wrap {
             display: flex;
+            flex-direction: column;
+            align-items: center;
             gap: 25px;
+        }
+
+        .dl-row {
+            display: flex;
+            gap: 20px;
             flex-wrap: wrap;
             justify-content: center;
         }
 
-        .download-box {
+        .box-btn {
             text-decoration: none;
-            width: 260px;
             background: white;
-            padding: 35px 20px;
             border-radius: 30px;
             border: 3px solid var(--red-main);
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.19, 1, 0.22, 1);
             box-shadow: 8px 8px 0px var(--red-main);
         }
+
+        .box-btn:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 12px 12px 0px var(--red-dark);
+        }
+
+        .box-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--red-dark);
+        }
+
+        .download-box {
+            width: 240px;
+            padding: 30px 20px;
+        }
+
+        .browser-box {
+            width: 500px;
+            max-width: 100%;
+            padding: 22px;
+        }
+
+        .platform-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .main-label {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--red-main);
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.6rem; }
+            .browser-box, .download-box { width: 100%; max-width: 320px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button class="refresh-btn" onclick="window.location.reload()">KETCHUPGAME</button>
+    </nav>
+
+    <main class="hero">
+        <h1>Walk in a boring 2D world, host a world, or join a friends one.</h1>
+
+        <div class="ui-wrap">
+            <div class="dl-row">
+                <a href="https://drive.google.com/uc?export=download&id=1VwoXJYfd_XdTDV-ZhcxgNztpgeWkDO6U" target="_blank" class="box-btn download-box">
+                    <span class="platform-label">Desktop</span>
+                    <span class="main-label">Download EXE</span>
+                </a>
+
+                <a href="https://drive.google.com/uc?export=download&id=124jTvRbnlAI-TnNQQu8bHSGiFxk9xwDU" target="_blank" class="box-btn download-box">
+                    <span class="platform-label">Apple</span>
+                    <span class="main-label">Download DMG</span>
+                </a>
+            </div>
+
+            <a href="https://microstudio.io/GUGGU/ketchupgame/247WMPTF/" target="_blank" class="box-btn browser-box">
+                <span class="main-label">Or play it in your browser</span>
+            </a>
+        </div>
+    </main>
+
+</body>
+</html>
 
         .download-box:hover {
             transform: translate(-4px, -4px);
