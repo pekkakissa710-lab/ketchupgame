@@ -4,16 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KetchupGame | Social Metaverse</title>
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family: 'Inter', sans-serif;
-}
+*{ margin:0; padding:0; box-sizing:border-box; font-family: 'Inter', sans-serif; }
 
 body{
   background:#05060f;
@@ -25,7 +19,6 @@ body{
   overflow-x:hidden;
 }
 
-/* Animoitu tausta */
 .bg{
   position:fixed;
   inset:0;
@@ -34,31 +27,17 @@ body{
   z-index: -1;
 }
 
-.bg-blob {
-  position: absolute;
-  width: 500px;
-  height: 500px;
-  background: linear-gradient(135deg, #ffcc0010, #ff880010);
-  filter: blur(80px);
-  border-radius: 50%;
-  animation: float 20s infinite alternate;
-}
-
-@keyframes float {
-  from { transform: translate(-10%, -10%) rotate(0deg); }
-  to { transform: translate(10%, 10%) rotate(360deg); }
-}
-
 .card{
   position:relative;
-  width:1000px;
+  width:900px;
   max-width:95%;
-  background:rgba(15, 17, 32, 0.8);
+  background:rgba(15, 17, 32, 0.85);
   border-radius:40px;
   padding:60px 40px;
   border:1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter:blur(25px);
+  backdrop-filter:blur(20px);
   box-shadow:0 25px 80px rgba(0,0,0,0.6);
+  text-align: center;
   animation: fadeIn 0.8s ease-out;
 }
 
@@ -68,7 +47,6 @@ body{
 }
 
 .logo{
-  text-align:center;
   font-size:64px;
   font-weight:900;
   letter-spacing: -2px;
@@ -76,189 +54,106 @@ body{
   background:linear-gradient(90deg,#ffd000,#ff4400);
   -webkit-background-clip:text;
   -webkit-text-fill-color:transparent;
-  filter: drop-shadow(0 0 15px rgba(255, 136, 0, 0.3));
 }
 
-.subtitle{
-  text-align:center;
-  color:#b6bbff;
-  font-size: 1.2rem;
-  margin-bottom:50px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.6;
-}
-
-/* Pelin esittelyosio */
-.about-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  margin-bottom: 50px;
-  padding-bottom: 40px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.about-box h3 {
-  color: #ffcc00;
-  margin-bottom: 10px;
-  font-size: 1.5rem;
-}
-
-.about-box p {
-  color: #a0a4d0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
+.subtitle { color:#b6bbff; margin-bottom:40px; font-size: 1.1rem; }
 
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap:25px;
+  margin-top: 30px;
 }
 
 .box{
   background:rgba(255,255,255,0.03);
-  border:1px solid rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
   border-radius:24px;
-  padding:30px 20px;
-  text-align: center;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  padding:35px;
+  transition: all 0.3s ease;
 }
 
 .box:hover{
-  transform:translateY(-10px);
+  transform:translateY(-8px);
   background: rgba(255, 255, 255, 0.06);
   border-color:#ffcc00;
-  box-shadow:0 15px 35px rgba(255,204,0,0.1);
-}
-
-.box h2{
-  font-size:22px;
-  margin-bottom:15px;
 }
 
 .btn{
+  display:block;
   width:100%;
-  display:inline-block;
-  padding:12px;
-  border-radius:12px;
+  padding:15px;
+  margin-top:20px;
+  border-radius:14px;
   font-weight:bold;
   text-decoration:none;
-  transition:0.3s;
-  font-size: 0.9rem;
-}
-
-.enabled{
   background:linear-gradient(135deg,#ffcc00,#ff8800);
   color:black;
-  box-shadow: 0 4px 15px rgba(255, 136, 0, 0.3);
+  transition:0.3s;
 }
 
-.enabled:hover{
+.btn:hover{
   transform:scale(1.05);
-  box-shadow: 0 6px 20px rgba(255, 136, 0, 0.5);
+  box-shadow: 0 10px 20px rgba(255, 136, 0, 0.3);
 }
 
-.disabled{
-  background:rgba(255,255,255,0.05);
-  color:#666;
-  border: 1px solid rgba(255,255,255,0.05);
-  cursor:not-allowed;
-}
-
-.footer{
-  margin-top:40px;
-  text-align:center;
-  color:#5a5e73;
-  font-size:13px;
-  letter-spacing: 1px;
-}
-
-@media (max-width: 768px) {
-  .about-section { grid-template-columns: 1fr; }
-  .logo { font-size: 40px; }
+.info-text {
+  margin-top: 15px;
+  font-size: 0.85rem;
+  color: #747b98;
 }
 </style>
 </head>
 <body>
 
-<div class="bg">
-  <div class="bg-blob"></div>
-</div>
+<div class="bg"></div>
 
 <div class="card">
   <div class="logo">KETCHUPGAME</div>
-  
-  <p class="subtitle">
-    Step into a vibrant 3D world. Meet new friends, explore together, and catch up in real-time.
-  </p>
-
-  <div class="about-section">
-    <div class="about-box">
-      <h3>🌍 Walk & Explore</h3>
-      <p>Navigate through beautifully crafted environments. Discover hidden spots and public squares where the community gathers.</p>
-    </div>
-    <div class="about-box">
-      <h3>💬 Socialize</h3>
-      <p>Seamless proximity-based chat. Just walk up to someone and start a conversation. Your next best friend is just a few steps away.</p>
-    </div>
-  </div>
+  <p class="subtitle">The ultimate social experience. Walk, chat, and meet new people.</p>
 
   <div class="grid">
     <div class="box">
-      <h2>Windows</h2>
-      <a id="exeBtn" class="btn disabled">Checking...</a>
+      <h2>Desktop Version</h2>
+      <p class="info-text">Windows & Mac Compatible</p>
+      <a href="https://drive.google.com/uc?export=download&id=1VwoXJYfd_XdTDV-ZhcxgNztpgeWkDO6U" 
+         target="_blank" 
+         class="btn" 
+         onclick="showStatus(this)">
+         Download Game
+      </a>
     </div>
 
     <div class="box">
-      <h2>macOS</h2>
-      <a id="dmgBtn" class="btn disabled">Checking...</a>
-    </div>
-
-    <div class="box">
-      <h2>Android</h2>
-      <a id="apkBtn" class="btn disabled">Checking...</a>
-    </div>
-
-    <div class="box">
-      <h2>Linux</h2>
-      <a id="linuxBtn" class="btn disabled">Checking...</a>
+      <h2>Mobile Version</h2>
+      <p class="info-text">Android Installation (APK)</p>
+      <a href="https://drive.google.com/uc?export=download&id=124jTvRbnlAI-TnNQQu8bHSGiFxk9xwDU" 
+         target="_blank" 
+         class="btn" 
+         onclick="showStatus(this)">
+         Download APK
+      </a>
     </div>
   </div>
 
-  <div class="footer">
-    SYSTEM STATUS: Auto-detecting latest builds...
+  <div id="status" style="margin-top:30px; color:#ffcc00; font-weight:bold; display:none;">
+    Download started! Check your browser's downloads.
   </div>
+
+  <p style="margin-top:40px; color:#5a5e73; font-size:12px;">
+    Note: If the file is large, Google may ask for a virus scan confirmation.
+  </p>
 </div>
 
 <script>
-function setupButton(id, fileName, text){
-  const btn = document.getElementById(id);
-
-  fetch(fileName, { method: "HEAD" })
-    .then(res => {
-      if(res.ok){
-        btn.classList.remove("disabled");
-        btn.classList.add("enabled");
-        btn.href = fileName;
-        btn.download = "";
-        btn.innerText = "Download " + text;
-      } else {
-        btn.innerText = "Coming Soon";
-      }
-    })
-    .catch(() => {
-      btn.innerText = "Coming Soon";
-    });
+function showStatus(btn) {
+  const status = document.getElementById('status');
+  status.style.display = 'block';
+  btn.innerText = "Opening Download...";
+  setTimeout(() => {
+    btn.innerText = "Download Again";
+  }, 3000);
 }
-
-// Alustetaan painikkeet
-setupButton("exeBtn", "KetchupGame.exe", "EXE");
-setupButton("dmgBtn", "KetchupGame.dmg", "DMG");
-setupButton("apkBtn", "KetchupGame.apk", "APK");
-setupButton("linuxBtn", "KetchupGame.AppImage", "AppImage");
 </script>
 
 </body>
