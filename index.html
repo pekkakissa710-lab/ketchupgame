@@ -18,156 +18,141 @@
         #main-wrapper { display: flex; flex-direction: column; align-items: center; transition: filter 0.3s ease; }
         .blurred { filter: blur(15px); }
 
-        /* UI Elements */
-        #counter { font-size: 6rem; font-weight: 900; color: white; text-shadow: 4px 4px var(--deep-red); margin-bottom: 0; }
-        #stats { color: white; font-weight: bold; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px rgba(0,0,0,0.3); }
+        #counter { font-size: 8rem; font-weight: 900; color: white; text-shadow: 4px 4px var(--deep-red); line-height: 1; }
+        #stats { color: white; font-weight: bold; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 2px; }
 
-        #ketchup-btn { width: 250px; cursor: pointer; transition: 0.1s; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4)); }
-        #ketchup-btn:active { transform: scale(0.9) rotate(-5deg); }
+        #ketchup-btn { width: 280px; cursor: pointer; transition: 0.1s; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4)); margin-top: 20px; }
+        #ketchup-btn:active { transform: scale(0.92) rotate(-3deg); }
 
-        /* Upgrade Shop */
+        /* Shop Area */
         #shop {
-            position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
-            display: flex; flex-direction: column; gap: 15px; width: 250px;
+            position: fixed; right: 30px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 20px; width: 260px;
         }
 
         .upgrade-card {
-            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
-            padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px);
+            padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
             color: white; cursor: pointer; transition: 0.2s;
         }
 
-        .upgrade-card:hover { background: rgba(255, 255, 255, 0.25); transform: translateX(-5px); }
-        .upgrade-card.disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .upgrade-card:hover { background: rgba(0, 0, 0, 0.5); transform: scale(1.05); }
+        .upgrade-card h3 { font-size: 1.1rem; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 1px; }
+        .price { font-weight: bold; color: #44ff44; font-family: monospace; font-size: 1.1rem; }
 
-        .upgrade-card h3 { font-size: 1rem; margin-bottom: 5px; color: #fff; }
-        .upgrade-card p { font-size: 0.8rem; opacity: 0.9; }
-        .price { font-weight: bold; color: #ffeb3b; margin-top: 5px; display: block; }
-
-        /* Menus */
-        #info { position: fixed; top: 20px; left: 20px; color: white; opacity: 0.6; font-weight: bold; }
-        #delete-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 20px; z-index: 1100; text-align: center; border: 4px solid var(--deep-red); width: 300px; }
-        .action-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: var(--bright-red); color: white; margin-top: 10px; }
-
-        .splat { position: absolute; pointer-events: none; background: var(--bright-red); border-radius: 50%; animation: fly 0.6s forwards; z-index: 10; }
+        #info { position: fixed; top: 20px; left: 20px; color: white; opacity: 0.5; font-size: 0.8rem; }
+        #delete-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 20px; z-index: 1100; text-align: center; border: 5px solid var(--deep-red); }
+        
+        .action-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: var(--bright-red); color: white; margin-top: 10px; }
+        .splat { position: absolute; pointer-events: none; background: var(--bright-red); border-radius: 50%; animation: fly 0.5s forwards; z-index: 10; }
         @keyframes fly { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div id="info">Right Shift = Hard Reset</div>
+    <div id="info">RIGHT SHIFT = DELETE DATA</div>
 
     <div id="main-wrapper">
         <div id="stats">
-            Per Click: <span id="click-val">1</span> | Per Second: <span id="cps-val">0</span>
+            CLICK: +<span id="click-val">1</span> | AUTO: +<span id="cps-val">0</span>/s
         </div>
         <div id="ui"><span id="counter">0</span></div>
         <img src="ketchup.png" id="ketchup-btn" alt="Ketchup">
     </div>
 
     <div id="shop">
-        <div class="upgrade-card" onclick="buyUpgrade('click')">
-            <h3>Squeeze Harder</h3>
-            <p>Increases ketchup per click.</p>
-            <span class="price" id="click-price">Cost: 10</span>
+        <div class="upgrade-card" onclick="buy('click')">
+            <h3>Click Multiplier</h3>
+            <span class="price" id="click-price">Cost: 15</span>
         </div>
         
-        <div class="upgrade-card" onclick="buyUpgrade('auto')">
-            <h3>Ketchup Pump</h3>
-            <p>Automates ketchup production.</p>
-            <span class="price" id="auto-price">Cost: 50</span>
+        <div class="upgrade-card" onclick="buy('auto')">
+            <h3>Auto Multiplier</h3>
+            <span class="price" id="auto-price">Cost: 100</span>
         </div>
     </div>
 
     <div id="delete-menu">
-        <h3 style="color:var(--deep-red)">Reset All Progress?</h3>
-        <button class="action-btn" onclick="hardReset()">YES, DELETE ALL</button>
-        <button class="action-btn" style="background:#ccc" onclick="closeMenu()">CANCEL</button>
+        <h2 style="margin-bottom:1rem">HARD RESET?</h2>
+        <button class="action-btn" onclick="hardReset()">DELETE EVERYTHING</button>
+        <button class="action-btn" style="background:#888" onclick="closeMenu()">CANCEL</button>
     </div>
 
     <script>
-        // Game State
-        let score = parseFloat(localStorage.getItem('k_score')) || 0;
-        let clickPower = parseInt(localStorage.getItem('k_clickPower')) || 1;
-        let autoPower = parseInt(localStorage.getItem('k_autoPower')) || 0;
-        
-        let clickCost = parseInt(localStorage.getItem('k_clickCost')) || 10;
-        let autoCost = parseInt(localStorage.getItem('k_autoCost')) || 50;
+        // Data management
+        let data = JSON.parse(localStorage.getItem('ketchup_save')) || {
+            score: 0,
+            clickPower: 1,
+            autoPower: 0,
+            clickCost: 15,
+            autoCost: 100
+        };
 
-        const counterDisplay = document.getElementById('counter');
-        const clickValDisplay = document.getElementById('click-val');
-        const cpsValDisplay = document.getElementById('cps-val');
-        const clickPriceDisplay = document.getElementById('click-price');
-        const autoPriceDisplay = document.getElementById('auto-price');
+        const counterEl = document.getElementById('counter');
+        const clickValEl = document.getElementById('click-val');
+        const cpsValEl = document.getElementById('cps-val');
+        const clickPriceEl = document.getElementById('click-price');
+        const autoPriceEl = document.getElementById('auto-price');
 
-        function updateUI() {
-            counterDisplay.innerText = Math.floor(score);
-            clickValDisplay.innerText = clickPower;
-            cpsValDisplay.innerText = autoPower;
-            clickPriceDisplay.innerText = `Cost: ${clickCost}`;
-            autoPriceDisplay.innerText = `Cost: ${autoCost}`;
-            save();
+        function update() {
+            counterEl.innerText = Math.floor(data.score);
+            clickValEl.innerText = data.clickPower;
+            cpsValEl.innerText = data.autoPower;
+            clickPriceEl.innerText = `Cost: ${data.clickCost}`;
+            autoPriceEl.innerText = `Cost: ${data.autoCost}`;
+            localStorage.setItem('ketchup_save', JSON.stringify(data));
         }
 
-        function save() {
-            localStorage.setItem('k_score', score);
-            localStorage.setItem('k_clickPower', clickPower);
-            localStorage.setItem('k_autoPower', autoPower);
-            localStorage.setItem('k_clickCost', clickCost);
-            localStorage.setItem('k_autoCost', autoCost);
-        }
-
-        // Click Logic
+        // Main Click
         document.getElementById('ketchup-btn').onclick = (e) => {
-            score += clickPower;
-            updateUI();
+            data.score += data.clickPower;
+            update();
             spawnSplat(e.clientX, e.clientY);
         };
 
-        // Upgrade Logic
-        function buyUpgrade(type) {
-            if (type === 'click' && score >= clickCost) {
-                score -= clickCost;
-                clickPower += 1;
-                clickCost = Math.floor(clickCost * 1.5);
-            } else if (type === 'auto' && score >= autoCost) {
-                score -= autoCost;
-                autoPower += 1;
-                autoCost = Math.floor(autoCost * 1.6);
+        // Shop Logic
+        function buy(type) {
+            if (type === 'click' && data.score >= data.clickCost) {
+                data.score -= data.clickCost;
+                data.clickPower++;
+                data.clickCost = Math.floor(data.clickCost * 1.6);
+            } else if (type === 'auto' && data.score >= data.autoCost) {
+                data.score -= data.autoCost;
+                data.autoPower++;
+                data.autoCost = Math.floor(data.autoCost * 1.8);
             }
-            updateUI();
+            update();
         }
 
-        // Auto Clicker Interval (runs every second)
+        // Auto generation
         setInterval(() => {
-            if (autoPower > 0) {
-                score += autoPower;
-                updateUI();
+            if (data.autoPower > 0) {
+                data.score += (data.autoPower / 10); // Updated 10 times a second for smoothness
+                update();
             }
-        }, 1000);
+        }, 100);
 
-        // Splat Effect
         function spawnSplat(x, y) {
             for(let i=0; i<6; i++) {
                 const s = document.createElement('div');
                 s.className = 'splat';
                 s.style.left = x + 'px'; s.style.top = y + 'px';
-                s.style.width = s.style.height = (Math.random()*15+5)+'px';
+                s.style.width = s.style.height = (Math.random()*12+4)+'px';
                 s.style.setProperty('--x', (Math.random()-0.5)*300+'px');
                 s.style.setProperty('--y', (Math.random()-0.5)*300+'px');
                 document.body.appendChild(s);
-                setTimeout(() => s.remove(), 600);
+                setTimeout(() => s.remove(), 500);
             }
         }
 
-        // Restrictions & Reset
+        // Controls
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.code === "ShiftRight") {
                 document.getElementById('delete-menu').style.display = "block";
                 document.getElementById('main-wrapper').classList.add('blurred');
             }
-            if (e.keyCode === 27) closeMenu();
+            if (e.key === "Escape") closeMenu();
         });
 
         function closeMenu() {
@@ -176,12 +161,11 @@
         }
 
         function hardReset() {
-            localStorage.clear();
+            localStorage.removeItem('ketchup_save');
             location.reload();
         }
 
-        // Initial Load
-        updateUI();
+        update();
     </script>
 </body>
 </html>
