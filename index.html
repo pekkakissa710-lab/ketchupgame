@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ketchuppi Clicker - User System</title>
+    <title>Ketchuppi Clicker - Fixed Auth</title>
     <link rel="icon" type="image/png" href="ketchup.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -21,12 +21,32 @@
         /* Auth UI */
         #auth-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .auth-box { background: white; padding: 2rem; border-radius: 20px; text-align: center; width: 350px; border: 5px solid var(--deep-red); }
-        .auth-tabs { display: flex; margin-bottom: 1rem; gap: 5px; }
-        .tab-btn { flex: 1; padding: 10px; background: #eee; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        
+        .auth-tabs { 
+            display: flex; 
+            margin-bottom: 1.5rem; 
+            background: #eee; 
+            border-radius: 10px; 
+            padding: 5px;
+            gap: 5px;
+        }
+        
+        .tab-btn { 
+            flex: 1; 
+            padding: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            border-radius: 8px; 
+            transition: 0.2s;
+            border: none;
+            background: transparent;
+            color: #333;
+        }
+        
         .tab-btn.active { background: var(--bright-red); color: white; }
         
-        input { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: 2px solid #ddd; outline: none; }
-        .action-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: var(--bright-red); color: white; margin-top: 10px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 2px solid #ddd; outline: none; font-size: 1rem; }
+        .action-btn { width: 100%; padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: var(--bright-red); color: white; margin-top: 15px; font-size: 1rem; text-transform: uppercase; }
         
         /* Game UI */
         #counter { font-size: 8rem; font-weight: 900; color: white; text-shadow: 4px 4px var(--deep-red); }
@@ -45,24 +65,27 @@
     <div id="auth-screen">
         <div class="auth-box">
             <h2 style="color: var(--deep-red); margin-bottom: 1rem;">KETCHUPPI</h2>
+            
             <div class="auth-tabs">
-                <div id="tab-login" class="tab-btn active" onclick="switchTab('login')">Login</div>
-                <div id="tab-register" class="tab-btn" onclick="switchTab('register')">Register</div>
+                <button id="tab-login" class="tab-btn active" onclick="switchTab('login')">LOGIN</button>
+                <button id="tab-register" class="tab-btn" onclick="switchTab('register')">REGISTER</button>
             </div>
             
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="pass1" placeholder="Password">
-            <input type="password" id="pass2" placeholder="Confirm Password" style="display: none;">
-            
-            <button id="auth-submit" class="action-btn" onclick="handleAuth()">Login</button>
-            <p id="auth-msg" style="font-size: 0.8rem; margin-top: 10px; color: red;"></p>
+            <div id="auth-form">
+                <input type="text" id="username" placeholder="Username" autocomplete="off">
+                <input type="password" id="pass1" placeholder="Password">
+                <input type="password" id="pass2" placeholder="Confirm Password" style="display: none;">
+                
+                <button id="auth-submit" class="action-btn" onclick="handleAuth()">Login</button>
+                <p id="auth-msg" style="font-size: 0.85rem; margin-top: 15px; color: #ff4444; font-weight: bold; min-height: 1.2rem;"></p>
+            </div>
         </div>
     </div>
 
     <div id="info">Right Shift = Reset</div>
     <div id="leaderboard">
-        <h3 style="border-bottom: 1px solid red; margin-bottom: 10px;">Top 5 Players</h3>
-        <div id="lb-list">Loading...</div>
+        <h3 style="border-bottom: 2px solid var(--bright-red); margin-bottom: 10px; padding-bottom: 5px;">TOP 5 PLAYERS</h3>
+        <div id="lb-list">Connecting...</div>
     </div>
 
     <div id="main-wrapper">
@@ -71,95 +94,157 @@
     </div>
 
     <div id="delete-menu">
-        <h3>Reset Ketchup?</h3>
-        <button class="action-btn" onclick="resetData()">YES</button>
-        <button class="action-btn" style="background:#ccc" onclick="closeMenu()">NO</button>
+        <h3 style="margin-bottom:1rem;">Reset All Progress?</h3>
+        <button class="action-btn" onclick="resetData()">YES, DELETE</button>
+        <button class="action-btn" style="background:#888" onclick="closeMenu()">CANCEL</button>
     </div>
 
     <script>
+        // --- KONFIGURAATIO ---
         const SUPABASE_URL = 'https://drjymjtukbirohklftsk.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_wO1HyTNhV4uwzC4Ng39Fng_dTRxzHSx';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let currentTab = 'login';
+        let currentMode = 'login';
         let currentUser = null;
         let count = 0;
 
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-            document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-            document.getElementById('pass2').style.display = (tab === 'register') ? 'block' : 'none';
-            document.getElementById('auth-submit').innerText = (tab === 'register') ? 'Create Account' : 'Login';
-            document.getElementById('auth-msg').innerText = '';
+        // --- VÄLILEHTIEN VAIHTO ---
+        function switchTab(mode) {
+            currentMode = mode;
+            const loginBtn = document.getElementById('tab-login');
+            const regBtn = document.getElementById('tab-register');
+            const pass2Field = document.getElementById('pass2');
+            const submitBtn = document.getElementById('auth-submit');
+            const msg = document.getElementById('auth-msg');
+
+            msg.innerText = ''; // Tyhjennä virheet
+
+            if (mode === 'register') {
+                loginBtn.classList.remove('active');
+                regBtn.classList.add('active');
+                pass2Field.style.display = 'block';
+                submitBtn.innerText = 'Create Account';
+            } else {
+                regBtn.classList.remove('active');
+                loginBtn.classList.add('active');
+                pass2Field.style.display = 'none';
+                submitBtn.innerText = 'Login';
+            }
         }
 
+        // --- AUTH LOGIIKKA ---
         async function handleAuth() {
             const user = document.getElementById('username').value.trim();
             const p1 = document.getElementById('pass1').value;
             const p2 = document.getElementById('pass2').value;
             const msg = document.getElementById('auth-msg');
 
-            if (!user || !p1) return msg.innerText = "Fill all fields!";
-            const fakeEmail = `${user}@ketchup.com`;
+            if (!user || !p1) {
+                msg.innerText = "Please fill in all fields!";
+                return;
+            }
 
-            if (currentTab === 'register') {
-                if (p1 !== p2) return msg.innerText = "Passwords don't match!";
-                const { data, error } = await supabase.auth.signUp({ 
-                    email: fakeEmail, password: p1, options: { data: { username: user } } 
+            const fakeEmail = `${user.toLowerCase()}@ketchup.com`;
+
+            if (currentMode === 'register') {
+                if (p1.length < 6) {
+                    msg.innerText = "Password must be at least 6 chars!";
+                    return;
+                }
+                if (p1 !== p2) {
+                    msg.innerText = "Passwords do not match!";
+                    return;
+                }
+
+                const { data, error } = await supabaseClient.auth.signUp({ 
+                    email: fakeEmail, 
+                    password: p1, 
+                    options: { data: { username: user } } 
                 });
-                if (error) return msg.innerText = error.message;
-                alert("Account created! Now login.");
-                switchTab('login');
+
+                if (error) {
+                    msg.innerText = error.message;
+                } else {
+                    alert("Account created! Now login with your credentials.");
+                    switchTab('login');
+                }
             } else {
-                const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password: p1 });
-                if (error) return msg.innerText = "Wrong username or password!";
-                currentUser = data.user;
-                initGame();
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ 
+                    email: fakeEmail, 
+                    password: p1 
+                });
+
+                if (error) {
+                    msg.innerText = "Invalid username or password!";
+                } else {
+                    currentUser = data.user;
+                    startTheGame();
+                }
             }
         }
 
-        async function initGame() {
-            const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
+        async function startTheGame() {
+            const { data, error } = await supabaseClient
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+            
             if (data) count = data.ketchup_count;
+            
             document.getElementById('counter').innerText = count;
             document.getElementById('auth-screen').style.display = 'none';
+            
             updateLeaderboard();
             setInterval(saveToCloud, 5000);
         }
 
+        // --- PELIN TOIMINNOT ---
         document.getElementById('ketchup-btn').onclick = (e) => {
             if (!currentUser) return;
             count++;
             document.getElementById('counter').innerText = count;
+            spawnSplat(e.clientX, e.clientY);
+        };
+
+        function spawnSplat(x, y) {
             for(let i=0; i<6; i++) {
                 const s = document.createElement('div');
                 s.className = 'splat';
-                s.style.left = e.clientX+'px'; s.style.top = e.clientY+'px';
-                s.style.width = s.style.height = (Math.random()*15+5)+'px';
-                s.style.setProperty('--x', (Math.random()-0.5)*300+'px');
-                s.style.setProperty('--y', (Math.random()-0.5)*300+'px');
+                s.style.left = x + 'px'; 
+                s.style.top = y + 'px';
+                const size = (Math.random()*15+5) + 'px';
+                s.style.width = size; s.style.height = size;
+                s.style.setProperty('--x', (Math.random()-0.5)*350 + 'px');
+                s.style.setProperty('--y', (Math.random()-0.5)*350 + 'px');
                 document.body.appendChild(s);
                 setTimeout(() => s.remove(), 600);
             }
-        };
+        }
 
         async function saveToCloud() {
             if (currentUser) {
-                await supabase.from('profiles').update({ ketchup_count: count }).eq('id', currentUser.id);
+                await supabaseClient.from('profiles').update({ ketchup_count: count }).eq('id', currentUser.id);
                 updateLeaderboard();
             }
         }
 
         async function updateLeaderboard() {
-            const { data } = await supabase.from('profiles').select('username, ketchup_count').order('ketchup_count', { ascending: false }).limit(5);
+            const { data } = await supabaseClient
+                .from('profiles')
+                .select('username, ketchup_count')
+                .order('ketchup_count', { ascending: false })
+                .limit(5);
+            
             if (data) {
                 document.getElementById('lb-list').innerHTML = data.map((p, i) => 
-                    `<div style="font-size:0.9rem; margin-bottom:3px;">${i+1}. ${p.username || 'Anon'}: ${p.ketchup_count}</div>`
+                    `<div style="font-size:0.9rem; margin: 5px 0;">${i+1}. <b>${p.username || 'Anon'}</b>: ${p.ketchup_count}</div>`
                 ).join('');
             }
         }
 
+        // --- ESTOT & VALIKOT ---
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.code === "ShiftRight") {
@@ -175,8 +260,10 @@
         }
 
         async function resetData() {
-            count = 0; document.getElementById('counter').innerText = 0;
-            await saveToCloud(); closeMenu();
+            count = 0; 
+            document.getElementById('counter').innerText = 0;
+            await saveToCloud(); 
+            closeMenu();
         }
     </script>
 </body>
