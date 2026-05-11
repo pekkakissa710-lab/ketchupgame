@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ketchuppi Clicker</title>
     <link rel="icon" type="image/png" href="ketchup.png">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --deep-red: #b30000; --bright-red: #ff0000; }
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
@@ -13,105 +12,141 @@
         body {
             background: linear-gradient(180deg, #2c3e50 0%, #00d2ff 50%, #9ad0ec 100%);
             height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; cursor: default;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        #main-wrapper { height: 100vh; width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: filter 0.3s ease; }
+        #main-wrapper { display: flex; flex-direction: column; align-items: center; transition: filter 0.3s ease; }
         .blurred { filter: blur(15px); }
 
-        /* Username Prompt */
-        #name-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .name-box { background: white; padding: 2.5rem; border-radius: 20px; text-align: center; width: 350px; border: 5px solid var(--deep-red); }
-        
-        input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 10px; border: 2px solid #ddd; outline: none; font-size: 1.2rem; text-align: center; }
-        .action-btn { width: 100%; padding: 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: var(--bright-red); color: white; font-size: 1.1rem; text-transform: uppercase; }
-        
-        /* Game UI */
-        #counter { font-size: 8rem; font-weight: 900; color: white; text-shadow: 4px 4px var(--deep-red); }
-        #ketchup-btn { width: 280px; cursor: pointer; transition: 0.1s; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4)); }
-        #ketchup-btn:active { transform: scale(0.9) rotate(-5deg); }
-        #leaderboard { position: fixed; left: 20px; top: 20px; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); padding: 1rem; border-radius: 15px; color: white; width: 220px; border: 1px solid rgba(255,255,255,0.2); }
-        #info { position: fixed; top: 20px; right: 20px; color: white; opacity: 0.6; font-weight: bold; }
+        /* UI Elements */
+        #counter { font-size: 6rem; font-weight: 900; color: white; text-shadow: 4px 4px var(--deep-red); margin-bottom: 0; }
+        #stats { color: white; font-weight: bold; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px rgba(0,0,0,0.3); }
 
-        #delete-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 20px; z-index: 1100; text-align: center; border: 4px solid var(--deep-red); }
+        #ketchup-btn { width: 250px; cursor: pointer; transition: 0.1s; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4)); }
+        #ketchup-btn:active { transform: scale(0.9) rotate(-5deg); }
+
+        /* Upgrade Shop */
+        #shop {
+            position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 15px; width: 250px;
+        }
+
+        .upgrade-card {
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);
+            padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);
+            color: white; cursor: pointer; transition: 0.2s;
+        }
+
+        .upgrade-card:hover { background: rgba(255, 255, 255, 0.25); transform: translateX(-5px); }
+        .upgrade-card.disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .upgrade-card h3 { font-size: 1rem; margin-bottom: 5px; color: #fff; }
+        .upgrade-card p { font-size: 0.8rem; opacity: 0.9; }
+        .price { font-weight: bold; color: #ffeb3b; margin-top: 5px; display: block; }
+
+        /* Menus */
+        #info { position: fixed; top: 20px; left: 20px; color: white; opacity: 0.6; font-weight: bold; }
+        #delete-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 20px; z-index: 1100; text-align: center; border: 4px solid var(--deep-red); width: 300px; }
+        .action-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; background: var(--bright-red); color: white; margin-top: 10px; }
+
         .splat { position: absolute; pointer-events: none; background: var(--bright-red); border-radius: 50%; animation: fly 0.6s forwards; z-index: 10; }
         @keyframes fly { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; } }
     </style>
 </head>
 <body>
 
-    <div id="name-screen">
-        <div class="name-box">
-            <h2 style="color: var(--deep-red)">CHOOSE USERNAME</h2>
-            <input type="text" id="username-input" placeholder="Type name..." maxlength="15" autocomplete="off">
-            <button class="action-btn" onclick="startGame()">Start Clicking</button>
-        </div>
-    </div>
-
-    <div id="info">Right Shift = Reset</div>
-    <div id="leaderboard">
-        <h3 style="border-bottom: 2px solid var(--bright-red); margin-bottom: 10px; padding-bottom: 5px;">TOP 5 PLAYERS</h3>
-        <div id="lb-list">Loading...</div>
-    </div>
+    <div id="info">Right Shift = Hard Reset</div>
 
     <div id="main-wrapper">
+        <div id="stats">
+            Per Click: <span id="click-val">1</span> | Per Second: <span id="cps-val">0</span>
+        </div>
         <div id="ui"><span id="counter">0</span></div>
         <img src="ketchup.png" id="ketchup-btn" alt="Ketchup">
     </div>
 
+    <div id="shop">
+        <div class="upgrade-card" onclick="buyUpgrade('click')">
+            <h3>Squeeze Harder</h3>
+            <p>Increases ketchup per click.</p>
+            <span class="price" id="click-price">Cost: 10</span>
+        </div>
+        
+        <div class="upgrade-card" onclick="buyUpgrade('auto')">
+            <h3>Ketchup Pump</h3>
+            <p>Automates ketchup production.</p>
+            <span class="price" id="auto-price">Cost: 50</span>
+        </div>
+    </div>
+
     <div id="delete-menu">
-        <h3 style="margin-bottom:1rem;">Reset Everything?</h3>
-        <button class="action-btn" onclick="resetData()">YES</button>
-        <button class="action-btn" style="background:#888" onclick="closeMenu()">NO</button>
+        <h3 style="color:var(--deep-red)">Reset All Progress?</h3>
+        <button class="action-btn" onclick="hardReset()">YES, DELETE ALL</button>
+        <button class="action-btn" style="background:#ccc" onclick="closeMenu()">CANCEL</button>
     </div>
 
     <script>
-        // --- CONFIG ---
-        const SUPABASE_URL = 'https://drjymjtukbirohklftsk.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_wO1HyTNhV4uwzC4Ng39Fng_dTRxzHSx';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // Game State
+        let score = parseFloat(localStorage.getItem('k_score')) || 0;
+        let clickPower = parseInt(localStorage.getItem('k_clickPower')) || 1;
+        let autoPower = parseInt(localStorage.getItem('k_autoPower')) || 0;
+        
+        let clickCost = parseInt(localStorage.getItem('k_clickCost')) || 10;
+        let autoCost = parseInt(localStorage.getItem('k_autoCost')) || 50;
 
-        let username = "";
-        let count = 0;
-        let isStarted = false;
+        const counterDisplay = document.getElementById('counter');
+        const clickValDisplay = document.getElementById('click-val');
+        const cpsValDisplay = document.getElementById('cps-val');
+        const clickPriceDisplay = document.getElementById('click-price');
+        const autoPriceDisplay = document.getElementById('auto-price');
 
-        // --- START GAME ---
-        async function startGame() {
-            const input = document.getElementById('username-input').value.trim();
-            if (!input) return alert("Enter a name!");
-            
-            username = input;
-            
-            // Haetaan vanha saldo jos nimi on jo käytetty
-            const { data } = await supabaseClient
-                .from('profiles')
-                .select('ketchup_count')
-                .eq('username', username)
-                .single();
-            
-            if (data) {
-                count = data.ketchup_count;
-            } else {
-                // Jos uusi nimi, luodaan se tietokantaan
-                // HUOM: Tämä vaatii että id-sarake profiles-taulussa sallii nullin tai on generoitu
-                // helpompi tapa tässä vaiheessa: tallenna vain nimi ja ketchupt
-                await supabaseClient.from('profiles').insert([{ username: username, ketchup_count: 0 }]);
-            }
-
-            document.getElementById('counter').innerText = count;
-            document.getElementById('name-screen').style.display = 'none';
-            isStarted = true;
-            updateLeaderboard();
-            setInterval(saveToCloud, 5000);
+        function updateUI() {
+            counterDisplay.innerText = Math.floor(score);
+            clickValDisplay.innerText = clickPower;
+            cpsValDisplay.innerText = autoPower;
+            clickPriceDisplay.innerText = `Cost: ${clickCost}`;
+            autoPriceDisplay.innerText = `Cost: ${autoCost}`;
+            save();
         }
 
-        // --- CLICKING ---
+        function save() {
+            localStorage.setItem('k_score', score);
+            localStorage.setItem('k_clickPower', clickPower);
+            localStorage.setItem('k_autoPower', autoPower);
+            localStorage.setItem('k_clickCost', clickCost);
+            localStorage.setItem('k_autoCost', autoCost);
+        }
+
+        // Click Logic
         document.getElementById('ketchup-btn').onclick = (e) => {
-            if (!isStarted) return;
-            count++;
-            document.getElementById('counter').innerText = count;
+            score += clickPower;
+            updateUI();
             spawnSplat(e.clientX, e.clientY);
         };
 
+        // Upgrade Logic
+        function buyUpgrade(type) {
+            if (type === 'click' && score >= clickCost) {
+                score -= clickCost;
+                clickPower += 1;
+                clickCost = Math.floor(clickCost * 1.5);
+            } else if (type === 'auto' && score >= autoCost) {
+                score -= autoCost;
+                autoPower += 1;
+                autoCost = Math.floor(autoCost * 1.6);
+            }
+            updateUI();
+        }
+
+        // Auto Clicker Interval (runs every second)
+        setInterval(() => {
+            if (autoPower > 0) {
+                score += autoPower;
+                updateUI();
+            }
+        }, 1000);
+
+        // Splat Effect
         function spawnSplat(x, y) {
             for(let i=0; i<6; i++) {
                 const s = document.createElement('div');
@@ -125,23 +160,7 @@
             }
         }
 
-        async function saveToCloud() {
-            if (isStarted) {
-                await supabaseClient.from('profiles').update({ ketchup_count: count }).eq('username', username);
-                updateLeaderboard();
-            }
-        }
-
-        async function updateLeaderboard() {
-            const { data } = await supabaseClient.from('profiles').select('username, ketchup_count').order('ketchup_count', { ascending: false }).limit(5);
-            if (data) {
-                document.getElementById('lb-list').innerHTML = data.map((p, i) => 
-                    `<div style="font-size:0.9rem; margin: 4px 0;">${i+1}. ${p.username}: ${p.ketchup_count}</div>`
-                ).join('');
-            }
-        }
-
-        // --- RESTRICTIONS ---
+        // Restrictions & Reset
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.code === "ShiftRight") {
@@ -156,10 +175,13 @@
             document.getElementById('main-wrapper').classList.remove('blurred');
         }
 
-        async function resetData() {
-            count = 0; document.getElementById('counter').innerText = 0;
-            await saveToCloud(); closeMenu();
+        function hardReset() {
+            localStorage.clear();
+            location.reload();
         }
+
+        // Initial Load
+        updateUI();
     </script>
 </body>
 </html>
