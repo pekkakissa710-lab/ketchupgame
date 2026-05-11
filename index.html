@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,14 +9,12 @@
             --deep-red: #b30000;
             --bright-red: #ff0000;
             --sky-blue: #87CEEB;
-            --cloud-white: #f0f8ff;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            /* Estää tekstin valinnan kaikkialla */
             user-select: none;
             -webkit-user-select: none;
             -ms-user-select: none;
@@ -33,6 +31,19 @@
             overflow: hidden;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             cursor: default;
+        }
+
+        /* Information text in the top right corner */
+        #info-overlay {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            pointer-events: none;
         }
 
         #ui {
@@ -74,7 +85,6 @@
             transform: scale(0.9) rotate(-5deg);
         }
 
-        /* Roiske-efekti */
         .splat {
             position: absolute;
             pointer-events: none;
@@ -97,9 +107,9 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(255, 255, 255, 0.95);
-            padding: 2rem;
+            padding: 2.5rem;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
             z-index: 100;
             text-align: center;
             border: 4px solid var(--deep-red);
@@ -107,33 +117,39 @@
 
         #delete-menu h2 {
             color: var(--deep-red);
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
         }
 
         .btn-group {
             display: flex;
-            gap: 1rem;
+            gap: 1.5rem;
             justify-content: center;
         }
 
         .menu-btn {
-            padding: 0.8rem 1.5rem;
+            padding: 1rem 2rem;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             font-weight: bold;
             text-transform: uppercase;
+            font-size: 1rem;
+            transition: opacity 0.2s;
         }
 
+        .menu-btn:hover { opacity: 0.9; }
         .confirm { background: var(--bright-red); color: white; }
-        .cancel { background: #ccc; color: #333; }
+        .cancel { background: #ddd; color: #333; }
 
     </style>
 </head>
 <body>
 
+    <div id="info-overlay">Right Shift = Delete Data</div>
+
     <div id="ui">
-        <span id="label">Ketsuppia kerätty</span>
+        <span id="label">Ketchup Collected</span>
         <span id="counter">0</span>
     </div>
 
@@ -141,12 +157,12 @@
         <img src="ketchup.png" id="ketchup-btn" alt="Ketchup Bottle">
     </div>
 
-    <!-- Piilotettu nollausvalikko -->
+    <!-- Confirmation Menu -->
     <div id="delete-menu">
-        <h2>Haluatko varmasti nollata kaiken ketsupin?</h2>
+        <h2>Reset all progress?</h2>
         <div class="btn-group">
-            <button class="menu-btn confirm" onclick="resetData()">KYLLÄ</button>
-            <button class="menu-btn cancel" onclick="closeMenu()">EI</button>
+            <button class="menu-btn confirm" onclick="resetData()">Yes, Delete</button>
+            <button class="menu-btn cancel" onclick="closeMenu()">No, Keep it</button>
         </div>
     </div>
 
@@ -158,7 +174,7 @@
 
         counterDisplay.innerText = count;
 
-        // --- KLIKKAUSLOGIIKKA ---
+        // --- CLICK LOGIC ---
         btn.addEventListener('click', (e) => {
             count++;
             counterDisplay.innerText = count;
@@ -167,14 +183,14 @@
         });
 
         function createSplats(x, y) {
-            for (let i = 0; i < 6; i++) {
+            for (let i = 0; i < 8; i++) {
                 const splat = document.createElement('div');
                 splat.classList.add('splat');
                 const size = Math.random() * 15 + 5 + 'px';
                 splat.style.width = size;
                 splat.style.height = size;
-                const moveX = (Math.random() - 0.5) * 300 + 'px';
-                const moveY = (Math.random() - 0.5) * 300 + 'px';
+                const moveX = (Math.random() - 0.5) * 350 + 'px';
+                const moveY = (Math.random() - 0.5) * 350 + 'px';
                 splat.style.setProperty('--x', moveX);
                 splat.style.setProperty('--y', moveY);
                 splat.style.left = x + 'px';
@@ -184,24 +200,29 @@
             }
         }
 
-        // --- ESTOT (Inspect, Copy, ym.) ---
+        // --- ANTI-TAMPER / RESTRICTIONS ---
         document.addEventListener('contextmenu', e => e.preventDefault());
-        document.getElementById('ketchup-btn').ondragstart = () => false;
+        btn.ondragstart = () => false;
 
         document.addEventListener('keydown', (e) => {
-            // Estä perusjutut (Ctrl+A, Ctrl+U, Ctrl+S, Ctrl+Shift+I, F12)
+            // Block Inspect, View Source, Save, etc.
             if (e.ctrlKey && (e.keyCode === 65 || e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 83) || 
                 e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) {
                 e.preventDefault();
             }
 
-            // RIGHT SHIFT (code: ShiftRight) avaa nollausvalikon
+            // RIGHT SHIFT opens delete menu
             if (e.code === "ShiftRight") {
                 deleteMenu.style.display = "block";
             }
+            
+            // ESC closes menu
+            if (e.keyCode === 27) {
+                closeMenu();
+            }
         });
 
-        // --- VALIKON TOIMINNOT ---
+        // --- MENU ACTIONS ---
         function closeMenu() {
             deleteMenu.style.display = "none";
         }
