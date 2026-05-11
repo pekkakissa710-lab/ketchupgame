@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ketchuppi Clicker</title>
+    
+    <!-- FAVICON SETTING -->
+    <link rel="icon" type="image/png" href="ketchup.png">
+    
     <style>
         :root {
             --deep-red: #b30000;
@@ -33,7 +37,7 @@
             cursor: default;
         }
 
-        /* Information text in the top right corner */
+        /* Top right info text */
         #info-overlay {
             position: fixed;
             top: 20px;
@@ -200,12 +204,12 @@
             }
         }
 
-        // --- ANTI-TAMPER / RESTRICTIONS ---
+        // --- RESTRICTIONS ---
         document.addEventListener('contextmenu', e => e.preventDefault());
         btn.ondragstart = () => false;
 
         document.addEventListener('keydown', (e) => {
-            // Block Inspect, View Source, Save, etc.
+            // Block keyboard shortcuts
             if (e.ctrlKey && (e.keyCode === 65 || e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 83) || 
                 e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) {
                 e.preventDefault();
