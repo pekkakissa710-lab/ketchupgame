@@ -3,330 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ketchuppi Clicker</title>
+    <title>Ketchuppi Clicker - User System</title>
     <link rel="icon" type="image/png" href="ketchup.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --deep-red: #b30000;
-            --bright-red: #ff0000;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-user-drag: none;
-        }
-
+        :root { --deep-red: #b30000; --bright-red: #ff0000; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; }
+        
         body {
             background: linear-gradient(180deg, #2c3e50 0%, #00d2ff 50%, #9ad0ec 100%);
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            cursor: default;
+            height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; cursor: default;
         }
 
-        /* Container for blurring effect */
-        #main-wrapper {
-            height: 100vh;
-            width: 100vw;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: filter 0.3s ease;
-        }
+        #main-wrapper { height: 100vh; width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: filter 0.3s ease; }
+        .blurred { filter: blur(15px); }
 
-        .blurred {
-            filter: blur(12px);
-        }
-
-        /* Auth Screen Styling */
-        #auth-screen {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .auth-box {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 20px;
-            text-align: center;
-            width: 350px;
-            border: 6px solid var(--deep-red);
-            box-shadow: 0 0 30px rgba(0,0,0,0.5);
-        }
-
-        .auth-box h1 { color: var(--deep-red); margin-bottom: 1rem; font-size: 2rem; }
+        /* Auth UI */
+        #auth-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .auth-box { background: white; padding: 2rem; border-radius: 20px; text-align: center; width: 350px; border: 5px solid var(--deep-red); }
+        .auth-tabs { display: flex; margin-bottom: 1rem; gap: 5px; }
+        .tab-btn { flex: 1; padding: 10px; background: #eee; cursor: pointer; font-weight: bold; border-radius: 5px; }
+        .tab-btn.active { background: var(--bright-red); color: white; }
         
-        input {
-            width: 100%;
-            padding: 0.8rem;
-            margin: 0.5rem 0;
-            border-radius: 10px;
-            border: 2px solid #ddd;
-            font-size: 1rem;
-            outline: none;
-        }
+        input { width: 100%; padding: 10px; margin: 5px 0; border-radius: 8px; border: 2px solid #ddd; outline: none; }
+        .action-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: var(--bright-red); color: white; margin-top: 10px; }
+        
+        /* Game UI */
+        #counter { font-size: 8rem; font-weight: 900; color: white; text-shadow: 4px 4px var(--deep-red); }
+        #ketchup-btn { width: 280px; cursor: pointer; transition: 0.1s; filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4)); }
+        #ketchup-btn:active { transform: scale(0.9) rotate(-5deg); }
+        #leaderboard { position: fixed; left: 20px; top: 20px; background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); padding: 1rem; border-radius: 15px; color: white; width: 220px; border: 1px solid rgba(255,255,255,0.2); }
+        #info { position: fixed; top: 20px; right: 20px; color: white; opacity: 0.6; font-weight: bold; }
 
-        button {
-            width: 100%;
-            padding: 0.8rem;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-top: 0.5rem;
-            transition: transform 0.1s;
-        }
-
-        button:active { transform: scale(0.95); }
-
-        .primary-btn { background: var(--bright-red); color: white; margin-top: 1rem; }
-        .secondary-btn { background: #eee; color: #333; font-size: 0.8rem; }
-
-        /* Leaderboard & UI */
-        #leaderboard {
-            position: fixed;
-            left: 20px;
-            top: 20px;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            padding: 1.5rem;
-            border-radius: 15px;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 240px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-
-        #info-overlay {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            color: rgba(255, 255, 255, 0.6);
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        #counter {
-            font-size: 8rem;
-            font-weight: 900;
-            color: white;
-            line-height: 1;
-            text-shadow: 4px 4px 0px var(--deep-red);
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        #ketchup-btn {
-            width: 280px;
-            cursor: pointer;
-            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
-        }
-
-        #ketchup-btn:active {
-            transform: scale(0.9) rotate(-5deg);
-        }
-
-        /* Delete/Reset Menu */
-        #delete-menu {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 2.5rem;
-            border-radius: 25px;
-            z-index: 1100;
-            text-align: center;
-            border: 5px solid var(--deep-red);
-            width: 320px;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.7);
-        }
-
-        /* Splat animation */
-        .splat {
-            position: absolute;
-            pointer-events: none;
-            background: var(--bright-red);
-            border-radius: 50%;
-            animation: fly 0.6s ease-out forwards;
-            z-index: 10;
-        }
-
-        @keyframes fly {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
-        }
+        #delete-menu { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 20px; z-index: 1100; text-align: center; border: 4px solid var(--deep-red); }
+        .splat { position: absolute; pointer-events: none; background: var(--bright-red); border-radius: 50%; animation: fly 0.6s forwards; z-index: 10; }
+        @keyframes fly { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; } }
     </style>
 </head>
 <body>
 
     <div id="auth-screen">
         <div class="auth-box">
-            <h1>KETCHUPPI</h1>
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Password">
-            <input type="text" id="username" placeholder="Username (required for register)">
-            <button class="primary-btn" onclick="handleAuth('login')">Login</button>
-            <button class="secondary-btn" onclick="handleAuth('register')">Register New Account</button>
+            <h2 style="color: var(--deep-red); margin-bottom: 1rem;">KETCHUPPI</h2>
+            <div class="auth-tabs">
+                <div id="tab-login" class="tab-btn active" onclick="switchTab('login')">Login</div>
+                <div id="tab-register" class="tab-btn" onclick="switchTab('register')">Register</div>
+            </div>
+            
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="pass1" placeholder="Password">
+            <input type="password" id="pass2" placeholder="Confirm Password" style="display: none;">
+            
+            <button id="auth-submit" class="action-btn" onclick="handleAuth()">Login</button>
+            <p id="auth-msg" style="font-size: 0.8rem; margin-top: 10px; color: red;"></p>
         </div>
     </div>
 
-    <div id="info-overlay">Right Shift = Delete Data</div>
-
+    <div id="info">Right Shift = Reset</div>
     <div id="leaderboard">
-        <h3 style="margin-bottom: 12px; border-bottom: 2px solid var(--bright-red); padding-bottom: 5px;">GLOBAL TOP 5</h3>
-        <div id="lb-list">Connecting...</div>
+        <h3 style="border-bottom: 1px solid red; margin-bottom: 10px;">Top 5 Players</h3>
+        <div id="lb-list">Loading...</div>
     </div>
 
     <div id="main-wrapper">
-        <div id="ui">
-            <span id="counter">0</span>
-        </div>
-        <div class="container">
-            <img src="ketchup.png" id="ketchup-btn" alt="Ketchup Bottle">
-        </div>
+        <div id="ui"><span id="counter">0</span></div>
+        <img src="ketchup.png" id="ketchup-btn" alt="Ketchup">
     </div>
 
     <div id="delete-menu">
-        <h2 style="color: var(--deep-red); margin-bottom: 1.5rem;">Reset all stats?</h2>
-        <button class="primary-btn" onclick="resetData()">Yes, Delete</button>
-        <button class="secondary-btn" onclick="closeMenu()">Cancel</button>
+        <h3>Reset Ketchup?</h3>
+        <button class="action-btn" onclick="resetData()">YES</button>
+        <button class="action-btn" style="background:#ccc" onclick="closeMenu()">NO</button>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
         const SUPABASE_URL = 'https://drjymjtukbirohklftsk.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_wO1HyTNhV4uwzC4Ng39Fng_dTRxzHSx';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        let currentTab = 'login';
         let currentUser = null;
         let count = 0;
-        const counterDisplay = document.getElementById('counter');
-        const btn = document.getElementById('ketchup-btn');
-        const wrapper = document.getElementById('main-wrapper');
-        const deleteMenu = document.getElementById('delete-menu');
 
-        // --- AUTHENTICATION ---
-        async function handleAuth(type) {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const username = document.getElementById('username').value;
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+            document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+            document.getElementById('pass2').style.display = (tab === 'register') ? 'block' : 'none';
+            document.getElementById('auth-submit').innerText = (tab === 'register') ? 'Create Account' : 'Login';
+            document.getElementById('auth-msg').innerText = '';
+        }
 
-            if (type === 'register') {
-                if(!username) return alert("Please enter a username!");
-                const { data, error } = await supabaseClient.auth.signUp({
-                    email, password, options: { data: { username: username } }
+        async function handleAuth() {
+            const user = document.getElementById('username').value.trim();
+            const p1 = document.getElementById('pass1').value;
+            const p2 = document.getElementById('pass2').value;
+            const msg = document.getElementById('auth-msg');
+
+            if (!user || !p1) return msg.innerText = "Fill all fields!";
+            const fakeEmail = `${user}@ketchup.com`;
+
+            if (currentTab === 'register') {
+                if (p1 !== p2) return msg.innerText = "Passwords don't match!";
+                const { data, error } = await supabase.auth.signUp({ 
+                    email: fakeEmail, password: p1, options: { data: { username: user } } 
                 });
-                if (error) return alert(error.message);
-                alert("Account created! You can now login.");
+                if (error) return msg.innerText = error.message;
+                alert("Account created! Now login.");
+                switchTab('login');
             } else {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) return alert(error.message);
+                const { data, error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password: p1 });
+                if (error) return msg.innerText = "Wrong username or password!";
                 currentUser = data.user;
                 initGame();
             }
         }
 
         async function initGame() {
-            // Get initial count
-            const { data, error } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+            const { data } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
             if (data) count = data.ketchup_count;
-            
-            counterDisplay.innerText = count;
+            document.getElementById('counter').innerText = count;
             document.getElementById('auth-screen').style.display = 'none';
-            
             updateLeaderboard();
-            // Start auto-sync to cloud every 5 seconds
             setInterval(saveToCloud, 5000);
         }
 
-        // --- GAMEPLAY ---
-        btn.onclick = (e) => {
+        document.getElementById('ketchup-btn').onclick = (e) => {
             if (!currentUser) return;
             count++;
-            counterDisplay.innerText = count;
-            createSplats(e.clientX, e.clientY);
+            document.getElementById('counter').innerText = count;
+            for(let i=0; i<6; i++) {
+                const s = document.createElement('div');
+                s.className = 'splat';
+                s.style.left = e.clientX+'px'; s.style.top = e.clientY+'px';
+                s.style.width = s.style.height = (Math.random()*15+5)+'px';
+                s.style.setProperty('--x', (Math.random()-0.5)*300+'px');
+                s.style.setProperty('--y', (Math.random()-0.5)*300+'px');
+                document.body.appendChild(s);
+                setTimeout(() => s.remove(), 600);
+            }
         };
 
         async function saveToCloud() {
-            if (!currentUser) return;
-            await supabaseClient.from('profiles').update({ ketchup_count: count }).eq('id', currentUser.id);
-            updateLeaderboard();
+            if (currentUser) {
+                await supabase.from('profiles').update({ ketchup_count: count }).eq('id', currentUser.id);
+                updateLeaderboard();
+            }
         }
 
         async function updateLeaderboard() {
-            const { data } = await supabaseClient
-                .from('profiles')
-                .select('username, ketchup_count')
-                .order('ketchup_count', { ascending: false })
-                .limit(5);
-            
+            const { data } = await supabase.from('profiles').select('username, ketchup_count').order('ketchup_count', { ascending: false }).limit(5);
             if (data) {
                 document.getElementById('lb-list').innerHTML = data.map((p, i) => 
-                    `<div style="padding: 4px 0; font-size: 0.95rem;">${i+1}. <b>${p.username || 'Anon'}</b>: ${p.ketchup_count}</div>`
+                    `<div style="font-size:0.9rem; margin-bottom:3px;">${i+1}. ${p.username || 'Anon'}: ${p.ketchup_count}</div>`
                 ).join('');
             }
         }
 
-        function createSplats(x, y) {
-            for (let i = 0; i < 8; i++) {
-                const splat = document.createElement('div');
-                splat.classList.add('splat');
-                const size = Math.random() * 15 + 5 + 'px';
-                splat.style.width = size; splat.style.height = size;
-                const moveX = (Math.random() - 0.5) * 350 + 'px';
-                const moveY = (Math.random() - 0.5) * 350 + 'px';
-                splat.style.setProperty('--x', moveX); splat.style.setProperty('--y', moveY);
-                splat.style.left = x + 'px'; splat.style.top = y + 'px';
-                document.body.appendChild(splat);
-                setTimeout(() => splat.remove(), 600);
-            }
-        }
-
-        // --- SECURITY & MENUS ---
         document.addEventListener('contextmenu', e => e.preventDefault());
-        btn.ondragstart = () => false;
-
-        document.addEventListener('keydown', (e) => {
-            // Block generic shortcuts
-            if (e.ctrlKey && (e.keyCode === 65 || e.keyCode === 67 || e.keyCode === 85 || e.keyCode === 83) || 
-                e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) {
-                e.preventDefault();
-            }
-
-            // Right Shift to show Delete menu
+        document.addEventListener('keydown', e => {
             if (e.code === "ShiftRight") {
-                deleteMenu.style.display = "block";
-                wrapper.classList.add('blurred');
+                document.getElementById('delete-menu').style.display = "block";
+                document.getElementById('main-wrapper').classList.add('blurred');
             }
             if (e.keyCode === 27) closeMenu();
         });
 
         function closeMenu() {
-            deleteMenu.style.display = "none";
-            wrapper.classList.remove('blurred');
+            document.getElementById('delete-menu').style.display = "none";
+            document.getElementById('main-wrapper').classList.remove('blurred');
         }
 
         async function resetData() {
-            count = 0;
-            counterDisplay.innerText = 0;
-            await saveToCloud();
-            closeMenu();
+            count = 0; document.getElementById('counter').innerText = 0;
+            await saveToCloud(); closeMenu();
         }
     </script>
 </body>
