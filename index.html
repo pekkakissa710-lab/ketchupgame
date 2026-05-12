@@ -24,6 +24,7 @@
             -webkit-text-stroke: 2px black;
         }
 
+        /* Game Over säilyy punaisena, mutta Pause-menu muutettu normaaliksi */
         #gameover {
             background: rgba(255, 71, 71, 0.6) !important;
             backdrop-filter: blur(8px);
@@ -31,12 +32,15 @@
         }
 
         #pause-menu {
-            background: rgba(0, 0, 0, 0.4) !important;
+            background: rgba(0, 0, 0, 0.4) !important; /* Normaali tumma/läpinäkyvä tausta */
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
 
-        #keybinds-menu { background: #ff4747 !important; z-index: 200; }
+        #keybinds-menu {
+            background: #ff4747 !important;
+            z-index: 200;
+        }
 
         h1 { font-size: clamp(30px, 8vw, 60px); margin-bottom: 20px; text-align: center; }
         
@@ -79,6 +83,8 @@
             font-size: 14px; cursor: pointer; -webkit-text-stroke: 0px;
             font-family: 'Fredoka One';
         }
+        .key-btn.waiting { background: #ffd700; animation: blink 0.5s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
 
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -106,19 +112,30 @@
             -webkit-text-stroke: 1.2px black; font-size: 22px; z-index: 100; display: none;
         }
 
+        #confirm-menu {
+            position: fixed; width: 100%; height: 100%; top: 0; left: 0;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 500; background: rgba(0,0,0,0.8); 
+        }
+        #confirm-box {
+            background: white; color: #ff4747; padding: 30px; 
+            border: 5px solid black; border-radius: 25px; 
+            text-align: center; box-shadow: 0 10px 0 #000; width: 85%; max-width: 350px;
+        }
+
         .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
     <div id="game-container" class="blur-target"></div>
     
     <div id="menu" class="overlay">
         <h1>KETCHUP RUNNER</h1>
-        <div id="main-btns">
-            <button class="menu-btn" style="background: #00ff00; color: #006400; font-size: 28px; width: 240px;" id="play-btn-main" disabled>LOADING...</button>
+        <div id="main-btns" style="display: flex; flex-direction: column; align-items: center;">
+            <button class="menu-btn" style="background: #00ff00; color: #006400; font-size: 28px; width: 240px;" onclick="toggleDiffs()">PLAY</button>
             <button class="menu-btn" style="width: 240px;" onclick="openSettings()">SETTINGS</button>
-            <button class="menu-btn" style="width: 240px;" onclick="showBestRuns()">BEST RUNS</button>
+            <button class="menu-btn" style="width: 240px; font-size: 16px;" onclick="showBestRuns()">MY BEST RUNS</button>
         </div>
 
         <div id="diff-selection" class="hidden">
@@ -127,8 +144,11 @@
                 <button class="menu-btn diff-btn" onclick="setDiff('Easy', this)">EASY</button>
                 <button class="menu-btn diff-btn" onclick="setDiff('Medium', this)">MEDIUM</button>
                 <button class="menu-btn diff-btn" onclick="setDiff('Hard', this)">HARD</button>
+                <button class="menu-btn diff-btn" onclick="setDiff('Impossible', this)">IMPO</button>
             </div>
-            <button class="menu-btn" style="background: #00ff00; color: #006400; width: 220px; font-size: 24px;" id="start-confirm" disabled onclick="startGame()">START!</button>
+            <div style="display: flex; justify-content: center; width: 100%; margin-top: 20px;">
+                <button class="menu-btn" style="background: #00ff00; color: #006400; width: 220px; font-size: 24px;" id="start-confirm" disabled onclick="startGame()">START!</button>
+            </div>
         </div>
     </div>
 
@@ -136,16 +156,34 @@
         <div class="back-arrow" onclick="closeSettings()"><</div>
         <h1>SETTINGS</h1>
         <div class="setting-row"><span>FULLSCREEN</span><label class="switch"><input type="checkbox" id="fs-toggle" onchange="toggleFullscreen()"><span class="slider"></span></label></div>
+        <div class="setting-row"><span>SHOW FPS</span><label class="switch"><input type="checkbox" id="fps-toggle" onchange="updateSettings()"><span class="slider"></span></label></div>
+        <div class="setting-row"><span>FPS LIMIT (60)</span><label class="switch"><input type="checkbox" id="fps-limit" onchange="updateSettings()" checked><span class="slider"></span></label></div>
         <div class="setting-row"><span>SHOW SCORE</span><label class="switch"><input type="checkbox" id="score-toggle" onchange="updateSettings()" checked><span class="slider"></span></label></div>
-        <button class="menu-btn" onclick="openKeybinds()">KEYBINDS</button>
+        <button class="menu-btn" style="width: 280px; background: #555; color: white;" onclick="openKeybinds()">CUSTOM KEYBINDS</button>
+        <button class="menu-btn" style="width: 280px; margin-top: 10px; background: #000; color: white;" onclick="confirmDeleteAll()">DELETE ALL DATA</button>
     </div>
 
     <div id="keybinds-menu" class="overlay hidden">
         <div class="back-arrow" onclick="closeKeybinds()"><</div>
         <h1>KEYBINDS</h1>
         <div class="binds-container">
-            <div class="bind-row"><span>LEFT</span> <button class="key-btn" id="btn-left-0" onclick="listenForKey('left', 0)">?</button></div>
-            <div class="bind-row"><span>RIGHT</span> <button class="key-btn" id="btn-right-0" onclick="listenForKey('right', 0)">?</button></div>
+            <div class="bind-row"><span>LEFT</span> <div><button class="key-btn" id="btn-left-0" onclick="listenForKey('left', 0)">?</button> <button class="key-btn" id="btn-left-1" onclick="listenForKey('left', 1)">?</button></div></div>
+            <div class="bind-row"><span>RIGHT</span> <div><button class="key-btn" id="btn-right-0" onclick="listenForKey('right', 0)">?</button> <button class="key-btn" id="btn-right-1" onclick="listenForKey('right', 1)">?</button></div></div>
+            <div class="bind-row"><span>PAUSE</span> <div><button class="key-btn" id="btn-pause-0" onclick="listenForKey('pause', 0)">?</button> <button class="key-btn" id="btn-pause-1" onclick="listenForKey('pause', 1)">?</button></div></div>
+        </div>
+        <button class="menu-btn" style="margin-top: 20px;" onclick="resetBinds()">RESET DEFAULTS</button>
+    </div>
+
+    <div id="gameover" class="overlay hidden">
+        <h1>GAME OVER!</h1>
+        <button class="menu-btn" onclick="resetToMenu()">BACK TO MENU</button>
+    </div>
+
+    <div id="confirm-menu">
+        <div id="confirm-box">
+            <p style="font-weight: bold; -webkit-text-stroke: 0px;">Delete all data?</p>
+            <button class="menu-btn" style="background: #ff4747; color: white; width: 100px;" onclick="deleteAllData()">YES</button>
+            <button class="menu-btn" style="width: 100px; color: #ff4747;" onclick="cancelDeleteAll()">NO</button>
         </div>
     </div>
 
@@ -155,144 +193,222 @@
         <button class="menu-btn" onclick="resetToMenu()">QUIT</button>
     </div>
 
-    <div id="gameover" class="overlay hidden">
-        <h1>GAME OVER!</h1>
-        <button class="menu-btn" onclick="resetToMenu()">BACK TO MENU</button>
-    </div>
-
     <div id="best-runs-screen" class="overlay hidden">
         <div class="back-arrow" onclick="closeBestRuns()"><</div>
-        <h1>TOP RUNS</h1>
+        <h1>TOP 5 RUNS</h1>
         <div class="runs-container" id="full-runs-list"></div>
     </div>
 
-    <div id="ui">SCORE: <span id="score">0</span> | COINS: <span id="coins">0</span></div>
-    <div id="pause-btn" onclick="pauseGame()">||</div>
+    <div id="ui">
+        <span id="score-ui">SCORE: <span id="score">0</span></span> 
+        <span id="coin-ui"> | COINS: <span id="coins">0</span></span>
+    </div>
 
-    <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } } </script>
+    <div id="pause-btn" onclick="pauseGame()">
+        <div style="width: 6px; height: 20px; background: black; margin: 2px; border-radius: 2px;"></div>
+        <div style="width: 6px; height: 20px; background: black; margin: 2px; border-radius: 2px;"></div>
+    </div>
+
+    <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } } </script>
 
     <script type="module">
         import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
         let score = 0, coins = 0, gameActive = false, isPaused = false;
-        let speed = 0.6, spawnRate = 0.04;
+        let speed = 0.6, spawnRate = 0.04, currentDifficulty = null, targetFPS = 60, lastFrameTime = 0;
         const obstacles = [], coinObjects = [];
         const keys = { left: false, right: false };
 
-        // --- KEYBINDS ---
-        const defaultBinds = { left: ['KeyA'], right: ['KeyD'], pause: ['Escape'] };
+        // --- KEYBINDS LOGIC ---
+        const defaultBinds = {
+            left: ['KeyA', 'ArrowLeft'],
+            right: ['KeyD', 'ArrowRight'],
+            pause: ['KeyP', 'Escape']
+        };
         let currentBinds = JSON.parse(localStorage.getItem('ketchup_binds')) || JSON.parse(JSON.stringify(defaultBinds));
-        
-        // --- 3D MODELS ---
-        const loader = new GLTFLoader();
-        let playerModel, barrierModel;
+        let activeBinding = null;
 
-        async function loadAssets() {
-            try {
-                const [pData, bData] = await Promise.all([
-                    loader.loadAsync('car.glb'),
-                    loader.loadAsync('barrier.glb')
-                ]);
-                playerModel = pData.scene;
-                barrierModel = bData.scene;
-                document.getElementById('play-btn-main').innerText = "PLAY";
-                document.getElementById('play-btn-main').disabled = false;
-                document.getElementById('play-btn-main').onclick = toggleDiffs;
-            } catch (e) {
-                console.error("Models failed", e);
-                document.getElementById('play-btn-main').innerText = "PLAY (NO MODELS)";
-                document.getElementById('play-btn-main').disabled = false;
+        window.openKeybinds = () => { document.getElementById('settings-menu').classList.add('hidden'); document.getElementById('keybinds-menu').classList.remove('hidden'); updateBindButtons(); };
+        window.closeKeybinds = () => { document.getElementById('keybinds-menu').classList.add('hidden'); document.getElementById('settings-menu').classList.remove('hidden'); activeBinding = null; };
+        window.resetBinds = () => { currentBinds = JSON.parse(JSON.stringify(defaultBinds)); localStorage.setItem('ketchup_binds', JSON.stringify(currentBinds)); updateBindButtons(); };
+
+        function updateBindButtons() {
+            for (let action in currentBinds) {
+                currentBinds[action].forEach((key, index) => {
+                    const btn = document.getElementById(`btn-${action}-${index}`);
+                    btn.innerText = key.replace('Key', '').replace('Arrow', '');
+                    btn.classList.remove('waiting');
+                });
             }
         }
-        loadAssets();
 
-        // --- THREE.JS SETUP ---
+        window.listenForKey = (action, index) => {
+            activeBinding = { action, index };
+            updateBindButtons();
+            const btn = document.getElementById(`btn-${action}-${index}`);
+            btn.classList.add('waiting');
+            btn.innerText = 'PRESS KEY';
+        };
+
+        window.addEventListener('keydown', (e) => {
+            if (activeBinding) {
+                currentBinds[activeBinding.action][activeBinding.index] = e.code;
+                localStorage.setItem('ketchup_binds', JSON.stringify(currentBinds));
+                activeBinding = null;
+                updateBindButtons();
+                return;
+            }
+
+            if (currentBinds.left.includes(e.code)) keys.left = true;
+            if (currentBinds.right.includes(e.code)) keys.right = true;
+            if (currentBinds.pause.includes(e.code)) {
+                if (gameActive) isPaused ? resumeGame() : pauseGame();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (currentBinds.left.includes(e.code)) keys.left = false;
+            if (currentBinds.right.includes(e.code)) keys.right = false;
+        });
+
+        // --- GAME LOGIC ---
+        window.toggleFullscreen = () => {
+            if (!document.fullscreenElement) { document.documentElement.requestFullscreen().catch(() => {}); }
+            else { document.exitFullscreen(); }
+        };
+        document.addEventListener('fullscreenchange', () => {
+            const fsToggle = document.getElementById('fs-toggle');
+            if (fsToggle) fsToggle.checked = !!document.fullscreenElement;
+        });
+
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById('game-container').appendChild(renderer.domElement);
 
-        scene.background = new THREE.Color(0x87CEEB);
-        scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+        const loader = new THREE.TextureLoader();
+        scene.background = loader.load('https://img.freepik.com/free-vector/blue-sky-with-white-clouds-background_1017-23434.jpg');
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(5,15,10); scene.add(sun);
-
+        
         const roadGroup = new THREE.Group();
         const road = new THREE.Mesh(new THREE.PlaneGeometry(12, 1000), new THREE.MeshStandardMaterial({ color: 0x333333 }));
         road.rotation.x = -Math.PI / 2; roadGroup.add(road);
+        for (let i = 0; i < 50; i++) {
+            const line = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 4), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+            line.rotation.x = -Math.PI / 2; line.position.set(0, 0.02, -i * 20); roadGroup.add(line);
+        }
         scene.add(roadGroup);
 
-        const player = new THREE.Group();
-        scene.add(player);
+        const player = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+        player.position.y = 0.6; scene.add(player);
 
-        camera.position.set(0, 6, 11); camera.rotation.x = -0.4;
+        // Alustetaan kameran sijainti ja suunta
+        camera.position.set(0, 6, 11); 
+        camera.rotation.x = -0.4; // Katsoo hieman alaspäin, mutta pysyy suorassa
 
-        // --- GAME FUNCTIONS ---
-        window.startGame = () => {
-            player.clear();
-            if (playerModel) {
-                const car = playerModel.clone();
-                car.rotation.y = Math.PI;
-                car.scale.set(0.6, 0.6, 0.6);
-                player.add(car);
-            } else {
-                player.add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshStandardMaterial({color: 0xff0000})));
-            }
-            gameActive = true;
-            document.getElementById('menu').classList.add('hidden');
-            document.getElementById('ui').style.display = 'block';
-            document.getElementById('pause-btn').style.display = 'flex';
-            animate();
+        window.pauseGame = () => { if (gameActive) { isPaused = true; document.body.classList.add('paused-blur'); document.getElementById('pause-menu').classList.remove('hidden'); document.getElementById('pause-btn').style.display = 'none'; } };
+        window.resumeGame = () => { isPaused = false; document.body.classList.remove('paused-blur'); document.getElementById('pause-menu').classList.add('hidden'); document.getElementById('pause-btn').style.display = 'flex'; requestAnimationFrame(animate); };
+        window.resetToMenu = () => { 
+            obstacles.forEach(obj => scene.remove(obj)); 
+            coinObjects.forEach(obj => scene.remove(obj)); 
+            obstacles.length = 0; coinObjects.length = 0; 
+            player.position.x = 0; 
+            camera.position.x = 0; 
+            score = 0; coins = 0; 
+            gameActive = false; isPaused = false; 
+            document.body.classList.remove('paused-blur'); 
+            document.getElementById('ui').style.display = 'none'; 
+            document.getElementById('pause-btn').style.display = 'none'; 
+            document.getElementById('menu').classList.remove('hidden'); 
+            document.getElementById('pause-menu').classList.add('hidden'); 
+            document.getElementById('gameover').classList.add('hidden'); 
         };
 
-        function animate() {
-            if (!gameActive || isPaused) return;
-            requestAnimationFrame(animate);
+        window.toggleDiffs = () => { document.getElementById('main-btns').classList.toggle('hidden'); document.getElementById('diff-selection').classList.toggle('hidden'); };
+        window.setDiff = (level, btn) => { currentDifficulty = level; document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); document.getElementById('start-confirm').disabled = false; const diffs = { 'Easy': [0.4, 0.02], 'Medium': [0.6, 0.04], 'Hard': [1.0, 0.08], 'Impossible': [1.6, 0.18] }; [speed, spawnRate] = diffs[level]; };
+        window.openSettings = () => { document.getElementById('menu').classList.add('hidden'); document.getElementById('settings-menu').classList.remove('hidden'); };
+        window.closeSettings = () => { document.getElementById('settings-menu').classList.add('hidden'); document.getElementById('menu').classList.remove('hidden'); };
+        window.showBestRuns = () => { document.getElementById('menu').classList.add('hidden'); document.getElementById('best-runs-screen').classList.remove('hidden'); renderRuns(); };
+        window.closeBestRuns = () => { document.getElementById('best-runs-screen').classList.add('hidden'); document.getElementById('menu').classList.remove('hidden'); };
+        window.confirmDeleteAll = () => document.getElementById('confirm-menu').style.display = 'flex';
+        window.cancelDeleteAll = () => document.getElementById('confirm-menu').style.display = 'none';
+        window.deleteAllData = () => { localStorage.removeItem('ketchup_best'); cancelDeleteAll(); renderRuns(); };
 
-            if (keys.left && player.position.x > -5) player.position.x -= 0.2;
-            if (keys.right && player.position.x < 5) player.position.x += 0.2;
-
-            camera.position.x += (player.position.x - camera.position.x) * 0.1;
-
-            roadGroup.position.z += speed; if (roadGroup.position.z > 20) roadGroup.position.z = 0;
-
-            if (Math.random() < spawnRate) {
-                const obj = barrierModel ? barrierModel.clone() : new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1.5), new THREE.MeshStandardMaterial({color: 0xffdb00}));
-                obj.position.set((Math.random()-0.5)*10, 0, -150);
-                scene.add(obj); obstacles.push(obj);
-            }
-
-            obstacles.forEach((obj, i) => {
-                obj.position.z += speed;
-                if (player.position.distanceTo(obj.position) < 1.5) {
-                    gameActive = false; saveRun();
-                    document.getElementById('gameover').classList.remove('hidden');
-                    document.body.classList.add('paused-blur');
-                }
-                if (obj.position.z > 15) { scene.remove(obj); obstacles.splice(i, 1); score += 10; }
-            });
-
-            document.getElementById('score').innerText = score;
-            renderer.render(scene, camera);
+        function renderRuns() {
+            const runs = JSON.parse(localStorage.getItem('ketchup_best') || '[]');
+            const container = document.getElementById('full-runs-list');
+            container.innerHTML = runs.slice(0, 5).map((r, i) => `
+                <div class="run-item" style="border-bottom: 2px solid rgba(255,255,255,0.1); padding: 10px 0; display: flex; justify-content: space-between; align-items: center; font-size: 16px;">
+                    <div style="display:flex; flex-direction:column">
+                        <span>#${i+1} <b>${r.score}</b></span>
+                        <span class="run-date" style="font-size: 12px; color: #ccc; -webkit-text-stroke: 0.5px black;">${r.date} | ${r.time || '--:--'}</span>
+                    </div>
+                </div>
+            `).join('') || "<div style='text-align:center'>No runs yet!</div>";
         }
 
-        // Muut valikkofunktiot (Save, Settings jne.) pysyvät täysin ennallaan
-        window.pauseGame = () => { isPaused = true; document.getElementById('pause-menu').classList.remove('hidden'); document.body.classList.add('paused-blur'); };
-        window.resumeGame = () => { isPaused = false; document.getElementById('pause-menu').classList.add('hidden'); document.body.classList.remove('paused-blur'); animate(); };
-        window.resetToMenu = () => location.reload();
-        window.toggleDiffs = () => { document.getElementById('main-btns').classList.toggle('hidden'); document.getElementById('diff-selection').classList.toggle('hidden'); };
-        window.setDiff = (lvl, btn) => { speed = lvl==='Easy'?0.4:lvl==='Medium'?0.6:1.0; document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); document.getElementById('start-confirm').disabled=false; };
-        
-        window.addEventListener('keydown', e => { if(currentBinds.left.includes(e.code)) keys.left=true; if(currentBinds.right.includes(e.code)) keys.right=true; });
-        window.addEventListener('keyup', e => { if(currentBinds.left.includes(e.code)) keys.left=false; if(currentBinds.right.includes(e.code)) keys.right=false; });
+        window.startGame = () => { document.getElementById('menu').classList.add('hidden'); document.getElementById('ui').style.display = 'block'; document.getElementById('pause-btn').style.display = 'flex'; gameActive = true; requestAnimationFrame(animate); };
+
+        function animate(now) {
+            if (!gameActive || isPaused) return;
+            requestAnimationFrame(animate);
+            const delta = now - lastFrameTime;
+            if (delta < (1000 / targetFPS)) return;
+            lastFrameTime = now;
+            
+            // Liikkuminen
+            if (keys.left && player.position.x > -5.2) player.position.x -= 0.22;
+            if (keys.right && player.position.x < 5.2) player.position.x += 0.22;
+
+            // Kamera seuraa pelaajaa VAIN X-akselilla (sivusuunnassa)
+            // Ei käytetä lookAtia, jotta kamera ei käänny
+            camera.position.x += (player.position.x - camera.position.x) * 0.1;
+            
+            roadGroup.position.z += speed; if (roadGroup.position.z > 20) roadGroup.position.z = 0;
+            if (Math.random() < spawnRate) {
+                const isCoin = Math.random() < 0.3;
+                const obj = new THREE.Mesh(isCoin ? new THREE.CylinderGeometry(0.4,0.4,0.15,16) : new THREE.BoxGeometry(1.6, 1.6, 1.6), new THREE.MeshStandardMaterial({color: isCoin ? 0xffd700 : 0xffdb00}));
+                if(isCoin) obj.rotation.x = Math.PI/2; obj.position.set((Math.random()-0.5)*10, 0.7, -150); scene.add(obj); (isCoin ? coinObjects : obstacles).push(obj);
+            }
+            [...obstacles, ...coinObjects].forEach((obj) => {
+                obj.position.z += speed;
+                if (player.position.distanceTo(obj.position) < 1.5) {
+                    if (obstacles.includes(obj)) { 
+                        gameActive = false; saveRun(); 
+                        document.body.classList.add('paused-blur');
+                        document.getElementById('gameover').classList.remove('hidden'); 
+                        document.getElementById('pause-btn').style.display = 'none'; 
+                    }
+                    else { scene.remove(obj); coinObjects.splice(coinObjects.indexOf(obj), 1); coins++; score += 100; }
+                }
+                if (obj.position.z > 15) { scene.remove(obj); if(obstacles.includes(obj)) { obstacles.splice(obstacles.indexOf(obj), 1); score += 10; } else { coinObjects.splice(coinObjects.indexOf(obj), 1); } }
+            });
+            document.getElementById('score').innerText = score; document.getElementById('coins').innerText = coins; renderer.render(scene, camera);
+        }
 
         function saveRun() {
             const runs = JSON.parse(localStorage.getItem('ketchup_best') || '[]');
-            runs.push({ score, date: new Date().toLocaleDateString() });
+            const now = new Date();
+            runs.push({ score, date: now.toLocaleDateString('fi-FI'), time: now.toLocaleTimeString('fi-FI', {hour: '2-digit', minute:'2-digit'}) });
             runs.sort((a,b) => b.score - a.score);
-            localStorage.setItem('ketchup_best', JSON.stringify(runs.slice(0,5)));
+            localStorage.setItem('ketchup_best', JSON.stringify(runs.slice(0, 50)));
         }
+
+        window.updateSettings = () => {
+            document.getElementById('score-ui').style.display = document.getElementById('score-toggle').checked ? 'inline' : 'none';
+            targetFPS = document.getElementById('fps-limit').checked ? 60 : 1000;
+        };
+
+        window.addEventListener('touchstart', e => { 
+            if (!gameActive || isPaused || e.target.closest('button') || e.target.closest('.back-arrow')) return; 
+            if (e.touches[0].clientX < window.innerWidth/2) keys.left = true; else keys.right = true; 
+        }, {passive: true});
+        
+        window.addEventListener('touchend', () => { keys.left = false; keys.right = false; }, {passive: true});
+        
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
     </script>
 </body>
 </html>
