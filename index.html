@@ -209,15 +209,88 @@
         <div style="width: 6px; height: 20px; background: black; margin: 2px; border-radius: 2px;"></div>
     </div>
 
-    <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } } </script>
+    <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } } </script>
 
     <script type="module">
         import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
         let score = 0, coins = 0, gameActive = false, isPaused = false;
         let speed = 0.6, spawnRate = 0.04, currentDifficulty = null, targetFPS = 60, lastFrameTime = 0;
         const obstacles = [], coinObjects = [];
         const keys = { left: false, right: false };
+
+        // --- GLB TEMPLATES ---
+        let carTemplate = null;
+        let barrierTemplate = null;
+        const gltfLoader = new GLTFLoader();
+
+        function loadModels() {
+            return new Promise((resolve) => {
+                let loaded = 0;
+                const done = () => { loaded++; if (loaded === 2) resolve(); };
+
+                gltfLoader.load('car.glb', (gltf) => {
+                    carTemplate = gltf.scene;
+                    // Varmistetaan että mallin materiaalit näkyvät hyvin
+                    carTemplate.traverse((child) => {
+                        if (child.isMesh) {
+                            child.material.envMapIntensity = 1;
+                            child.material.needsUpdate = true;
+                        }
+                    });
+                    done();
+                }, undefined, () => { carTemplate = null; done(); });
+
+                gltfLoader.load('barrier.glb', (gltf) => {
+                    barrierTemplate = gltf.scene;
+                    barrierTemplate.traverse((child) => {
+                        if (child.isMesh) {
+                            child.material.envMapIntensity = 1;
+                            child.material.needsUpdate = true;
+                        }
+                    });
+                    done();
+                }, undefined, () => { barrierTemplate = null; done(); });
+            });
+        }
+
+        function createObstacle() {
+            if (barrierTemplate) {
+                const clone = barrierTemplate.clone(true);
+                // Skaalataan barrier sopivaksi
+                clone.scale.set(1, 1, 1);
+                clone.position.set((Math.random() - 0.5) * 10, 0, -150);
+                // Säilytetään mallin alkuperäiset värit
+                clone.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material = child.material.clone();
+                    }
+                });
+                scene.add(clone);
+                obstacles.push(clone);
+            } else {
+                // Fallback box jos malli ei lataudu
+                const obj = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.6, 1.6, 1.6),
+                    new THREE.MeshStandardMaterial({ color: 0xffdb00 })
+                );
+                obj.position.set((Math.random() - 0.5) * 10, 0.7, -150);
+                scene.add(obj);
+                obstacles.push(obj);
+            }
+        }
+
+        function createCoin() {
+            const obj = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.4, 0.4, 0.15, 16),
+                new THREE.MeshStandardMaterial({ color: 0xffd700 })
+            );
+            obj.rotation.x = Math.PI / 2;
+            obj.position.set((Math.random() - 0.5) * 10, 0.7, -150);
+            scene.add(obj);
+            coinObjects.push(obj);
+        }
 
         // --- KEYBINDS LOGIC ---
         const defaultBinds = {
@@ -301,20 +374,41 @@
         }
         scene.add(roadGroup);
 
-        const player = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
-        player.position.y = 0.6; scene.add(player);
+        // Pelaaja käyttää car.glb mallia
+        let playerMesh = null;
+        loadModels().then(() => {
+            if (carTemplate) {
+                playerMesh = carTemplate.clone(true);
+                playerMesh.position.y = 0.6;
+                playerMesh.traverse((child) => {
+                    if (child.isMesh && child.material) {
+                        child.material = child.material.clone();
+                    }
+                });
+                scene.add(playerMesh);
+            } else {
+                // Fallback
+                playerMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.2, 1.2, 1.2),
+                    new THREE.MeshStandardMaterial({ color: 0xff0000 })
+                );
+                playerMesh.position.y = 0.6;
+                scene.add(playerMesh);
+            }
+        });
 
-        // Alustetaan kameran sijainti ja suunta
+        // Kameran sijainti ja suunta
         camera.position.set(0, 6, 11); 
-        camera.rotation.x = -0.4; // Katsoo hieman alaspäin, mutta pysyy suorassa
+        camera.rotation.x = -0.4;
 
+        // Rekisteröidään kaikki window-funktiot ENNEN loadModels-kutsua
         window.pauseGame = () => { if (gameActive) { isPaused = true; document.body.classList.add('paused-blur'); document.getElementById('pause-menu').classList.remove('hidden'); document.getElementById('pause-btn').style.display = 'none'; } };
         window.resumeGame = () => { isPaused = false; document.body.classList.remove('paused-blur'); document.getElementById('pause-menu').classList.add('hidden'); document.getElementById('pause-btn').style.display = 'flex'; requestAnimationFrame(animate); };
         window.resetToMenu = () => { 
             obstacles.forEach(obj => scene.remove(obj)); 
             coinObjects.forEach(obj => scene.remove(obj)); 
             obstacles.length = 0; coinObjects.length = 0; 
-            player.position.x = 0; 
+            if (playerMesh) { playerMesh.position.x = 0; }
             camera.position.x = 0; 
             score = 0; coins = 0; 
             gameActive = false; isPaused = false; 
@@ -335,6 +429,31 @@
         window.confirmDeleteAll = () => document.getElementById('confirm-menu').style.display = 'flex';
         window.cancelDeleteAll = () => document.getElementById('confirm-menu').style.display = 'none';
         window.deleteAllData = () => { localStorage.removeItem('ketchup_best'); cancelDeleteAll(); renderRuns(); };
+        window.startGame = () => { document.getElementById('menu').classList.add('hidden'); document.getElementById('ui').style.display = 'block'; document.getElementById('pause-btn').style.display = 'flex'; gameActive = true; requestAnimationFrame(animate); };
+        window.updateSettings = () => {
+            document.getElementById('score-ui').style.display = document.getElementById('score-toggle').checked ? 'inline' : 'none';
+            targetFPS = document.getElementById('fps-limit').checked ? 60 : 1000;
+        };
+
+        // Ladataan mallit (ei kaada sivua jos epäonnistuu)
+        loadModels().then(() => {
+            if (carTemplate) {
+                playerMesh = carTemplate.clone(true);
+                playerMesh.position.y = 0.6;
+                playerMesh.traverse((child) => {
+                    if (child.isMesh && child.material) { child.material = child.material.clone(); }
+                });
+                scene.add(playerMesh);
+            } else {
+                playerMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+                playerMesh.position.y = 0.6;
+                scene.add(playerMesh);
+            }
+        }).catch(() => {
+            playerMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshStandardMaterial({ color: 0xff0000 }));
+            playerMesh.position.y = 0.6;
+            scene.add(playerMesh);
+        });
 
         function renderRuns() {
             const runs = JSON.parse(localStorage.getItem('ketchup_best') || '[]');
@@ -358,23 +477,26 @@
             if (delta < (1000 / targetFPS)) return;
             lastFrameTime = now;
             
-            // Liikkuminen
-            if (keys.left && player.position.x > -5.2) player.position.x -= 0.22;
-            if (keys.right && player.position.x < 5.2) player.position.x += 0.22;
+            if (!playerMesh) { renderer.render(scene, camera); return; }
 
-            // Kamera seuraa pelaajaa VAIN X-akselilla (sivusuunnassa)
-            // Ei käytetä lookAtia, jotta kamera ei käänny
-            camera.position.x += (player.position.x - camera.position.x) * 0.1;
+            // Liikkuminen
+            if (keys.left && playerMesh.position.x > -5.2) playerMesh.position.x -= 0.22;
+            if (keys.right && playerMesh.position.x < 5.2) playerMesh.position.x += 0.22;
+
+            // Kamera seuraa pelaajaa VAIN X-akselilla
+            camera.position.x += (playerMesh.position.x - camera.position.x) * 0.1;
             
             roadGroup.position.z += speed; if (roadGroup.position.z > 20) roadGroup.position.z = 0;
             if (Math.random() < spawnRate) {
-                const isCoin = Math.random() < 0.3;
-                const obj = new THREE.Mesh(isCoin ? new THREE.CylinderGeometry(0.4,0.4,0.15,16) : new THREE.BoxGeometry(1.6, 1.6, 1.6), new THREE.MeshStandardMaterial({color: isCoin ? 0xffd700 : 0xffdb00}));
-                if(isCoin) obj.rotation.x = Math.PI/2; obj.position.set((Math.random()-0.5)*10, 0.7, -150); scene.add(obj); (isCoin ? coinObjects : obstacles).push(obj);
+                if (Math.random() < 0.3) {
+                    createCoin();
+                } else {
+                    createObstacle();
+                }
             }
             [...obstacles, ...coinObjects].forEach((obj) => {
                 obj.position.z += speed;
-                if (player.position.distanceTo(obj.position) < 1.5) {
+                if (playerMesh.position.distanceTo(obj.position) < 1.5) {
                     if (obstacles.includes(obj)) { 
                         gameActive = false; saveRun(); 
                         document.body.classList.add('paused-blur');
