@@ -256,7 +256,7 @@
             if (barrierTemplate) {
                 const clone = barrierTemplate.clone(true);
                 clone.scale.set(1, 1, 1);
-                clone.rotation.y = Math.PI / 2; // KORJAUS: barrier poikittain tielle
+                clone.rotation.y = 0;
                 clone.position.set((Math.random() - 0.5) * 10, 0, -150);
                 clone.traverse((child) => {
                     if (child.isMesh && child.material) {
@@ -325,7 +325,6 @@
                 updateBindButtons();
                 return;
             }
-
             if (currentBinds.left.includes(e.code)) keys.left = true;
             if (currentBinds.right.includes(e.code)) keys.right = true;
             if (currentBinds.pause.includes(e.code)) {
@@ -369,7 +368,6 @@
 
         let playerMesh = null;
 
-        // KORJAUS: loadModels kutsutaan vain kerran
         loadModels().then(() => {
             if (carTemplate) {
                 playerMesh = carTemplate.clone(true);
@@ -411,7 +409,7 @@
         };
 
         window.toggleDiffs = () => { document.getElementById('main-btns').classList.toggle('hidden'); document.getElementById('diff-selection').classList.toggle('hidden'); };
-        window.setDiff = (level, btn) => { currentDifficulty = level; document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); document.getElementById('start-confirm').disabled = false; const diffs = { 'Easy': [0.4, 0.02], 'Medium': [0.6, 0.04], 'Hard': [1.0, 0.08], 'Impossible': [1.6, 0.18] }; [speed, spawnRate] = diffs[level]; };
+        window.setDiff = (level, btn) => { currentDifficulty = level; document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); document.getElementById('start-confirm').disabled = false; const diffs = { 'Easy': [0.4, 0.02], 'Medium': [0.6, 0.04], 'Hard': [1.0, 0.08], 'Impossible': [3.2, 0.35] }; [speed, spawnRate] = diffs[level]; };
         window.openSettings = () => { document.getElementById('menu').classList.add('hidden'); document.getElementById('settings-menu').classList.remove('hidden'); };
         window.closeSettings = () => { document.getElementById('settings-menu').classList.add('hidden'); document.getElementById('menu').classList.remove('hidden'); };
         window.showBestRuns = () => { document.getElementById('menu').classList.add('hidden'); document.getElementById('best-runs-screen').classList.remove('hidden'); renderRuns(); };
@@ -454,7 +452,7 @@
             
             roadGroup.position.z += speed; if (roadGroup.position.z > 20) roadGroup.position.z = 0;
             if (Math.random() < spawnRate) {
-                if (Math.random() < 0.3) {
+                if (Math.random() < 0.5) {
                     createCoin();
                 } else {
                     createObstacle();
