@@ -256,7 +256,7 @@
             if (barrierTemplate) {
                 const clone = barrierTemplate.clone(true);
                 clone.scale.set(1, 1, 1);
-                clone.rotation.y = Math.PI / 2;
+                clone.rotation.y = 0;
                 clone.position.set((Math.random() - 0.5) * 10, 0, -150);
                 clone.traverse((child) => {
                     if (child.isMesh && child.material) {
@@ -372,7 +372,6 @@
             if (carTemplate) {
                 playerMesh = carTemplate.clone(true);
                 playerMesh.position.y = 0.6;
-                playerMesh.rotation.y = Math.PI;
                 playerMesh.traverse((child) => {
                     if (child.isMesh && child.material) { child.material = child.material.clone(); }
                 });
