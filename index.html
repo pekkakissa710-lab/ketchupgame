@@ -14,7 +14,6 @@
         }
         body { margin: 0; overflow: hidden; background: #87CEEB; font-family: 'Fredoka One', cursive; }
         
-        /* Blur-tehosteet */
         .blur-target { transition: filter 0.3s ease; }
         .paused-blur .blur-target { filter: blur(8px); }
 
@@ -25,19 +24,19 @@
             -webkit-text-stroke: 2px black;
         }
 
-        /* Game Over on edelleen punertava */
         #gameover {
             background: rgba(255, 71, 71, 0.6) !important;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
 
-        /* Pause-menu on nyt normaali/harmaa */
         #pause-menu {
             background: rgba(0, 0, 0, 0.4) !important;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
         }
+
+        #keybinds-menu { background: #ff4747 !important; z-index: 200; }
 
         h1 { font-size: clamp(30px, 8vw, 60px); margin-bottom: 20px; text-align: center; }
         
@@ -61,10 +60,38 @@
             box-shadow: 0 4px 0px #000; z-index: 100; -webkit-text-stroke: 2px black;
         }
 
-        #ui { 
-            position: absolute; top: 15px; left: 15px; color: white; 
-            -webkit-text-stroke: 1.2px black; font-size: 22px; z-index: 100; display: none;
+        .runs-container, .binds-container { 
+            width: 95%; max-width: 450px; 
+            background: rgba(0,0,0,0.4); 
+            padding: 20px; border: 4px solid black; border-radius: 20px; 
+            -webkit-text-stroke: 1px black;
         }
+
+        .setting-row, .bind-row { 
+            display: flex; align-items: center; justify-content: space-between; 
+            width: 320px; margin: 8px; font-size: 18px; 
+            background: rgba(0,0,0,0.2); padding: 10px 20px; border-radius: 20px; border: 2.5px solid black;
+        }
+
+        .key-btn {
+            background: white; color: black; border: 2px solid black;
+            padding: 5px 10px; border-radius: 8px; min-width: 80px;
+            font-size: 14px; cursor: pointer; -webkit-text-stroke: 0px;
+            font-family: 'Fredoka One';
+        }
+
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 34px; border: 2px solid black;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%; border: 1.5px solid black;
+        }
+        input:checked + .slider { background-color: #00ff00; }
+        input:checked + .slider:before { transform: translateX(24px); }
 
         #pause-btn {
             position: absolute; top: 15px; right: 15px;
@@ -72,6 +99,11 @@
             border: 3px solid black; border-radius: 12px;
             display: none; align-items: center; justify-content: center;
             cursor: pointer; z-index: 100; box-shadow: 0 4px 0 black;
+        }
+
+        #ui { 
+            position: absolute; top: 15px; left: 15px; color: white; 
+            -webkit-text-stroke: 1.2px black; font-size: 22px; z-index: 100; display: none;
         }
 
         .hidden { display: none !important; }
@@ -85,6 +117,8 @@
         <h1>KETCHUP RUNNER</h1>
         <div id="main-btns">
             <button class="menu-btn" style="background: #00ff00; color: #006400; font-size: 28px; width: 240px;" id="play-btn-main" disabled>LOADING...</button>
+            <button class="menu-btn" style="width: 240px;" onclick="openSettings()">SETTINGS</button>
+            <button class="menu-btn" style="width: 240px;" onclick="showBestRuns()">BEST RUNS</button>
         </div>
 
         <div id="diff-selection" class="hidden">
@@ -95,6 +129,23 @@
                 <button class="menu-btn diff-btn" onclick="setDiff('Hard', this)">HARD</button>
             </div>
             <button class="menu-btn" style="background: #00ff00; color: #006400; width: 220px; font-size: 24px;" id="start-confirm" disabled onclick="startGame()">START!</button>
+        </div>
+    </div>
+
+    <div id="settings-menu" class="overlay hidden">
+        <div class="back-arrow" onclick="closeSettings()"><</div>
+        <h1>SETTINGS</h1>
+        <div class="setting-row"><span>FULLSCREEN</span><label class="switch"><input type="checkbox" id="fs-toggle" onchange="toggleFullscreen()"><span class="slider"></span></label></div>
+        <div class="setting-row"><span>SHOW SCORE</span><label class="switch"><input type="checkbox" id="score-toggle" onchange="updateSettings()" checked><span class="slider"></span></label></div>
+        <button class="menu-btn" onclick="openKeybinds()">KEYBINDS</button>
+    </div>
+
+    <div id="keybinds-menu" class="overlay hidden">
+        <div class="back-arrow" onclick="closeKeybinds()"><</div>
+        <h1>KEYBINDS</h1>
+        <div class="binds-container">
+            <div class="bind-row"><span>LEFT</span> <button class="key-btn" id="btn-left-0" onclick="listenForKey('left', 0)">?</button></div>
+            <div class="bind-row"><span>RIGHT</span> <button class="key-btn" id="btn-right-0" onclick="listenForKey('right', 0)">?</button></div>
         </div>
     </div>
 
@@ -109,6 +160,12 @@
         <button class="menu-btn" onclick="resetToMenu()">BACK TO MENU</button>
     </div>
 
+    <div id="best-runs-screen" class="overlay hidden">
+        <div class="back-arrow" onclick="closeBestRuns()"><</div>
+        <h1>TOP RUNS</h1>
+        <div class="runs-container" id="full-runs-list"></div>
+    </div>
+
     <div id="ui">SCORE: <span id="score">0</span> | COINS: <span id="coins">0</span></div>
     <div id="pause-btn" onclick="pauseGame()">||</div>
 
@@ -120,58 +177,58 @@
 
         let score = 0, coins = 0, gameActive = false, isPaused = false;
         let speed = 0.6, spawnRate = 0.04;
-        const obstacles = [], coinObjects = [], keys = { left: false, right: false };
+        const obstacles = [], coinObjects = [];
+        const keys = { left: false, right: false };
 
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('game-container').appendChild(renderer.domElement);
-
-        // Valot (tärkeää 3D-malleille)
-        scene.add(new THREE.AmbientLight(0xffffff, 2.0));
-        const sun = new THREE.DirectionalLight(0xffffff, 1.5);
-        sun.position.set(5, 15, 10);
-        scene.add(sun);
-
-        // Tie
-        const roadGroup = new THREE.Group();
-        const road = new THREE.Mesh(new THREE.PlaneGeometry(12, 1000), new THREE.MeshStandardMaterial({ color: 0x333333 }));
-        road.rotation.x = -Math.PI / 2;
-        roadGroup.add(road);
-        scene.add(roadGroup);
-
-        // Pelaaja ja mallien lataus
-        let player = new THREE.Group();
-        scene.add(player);
+        // --- KEYBINDS ---
+        const defaultBinds = { left: ['KeyA'], right: ['KeyD'], pause: ['Escape'] };
+        let currentBinds = JSON.parse(localStorage.getItem('ketchup_binds')) || JSON.parse(JSON.stringify(defaultBinds));
+        
+        // --- 3D MODELS ---
+        const loader = new GLTFLoader();
         let playerModel, barrierModel;
 
-        const loader = new GLTFLoader();
         async function loadAssets() {
             try {
                 const [pData, bData] = await Promise.all([
-                    loader.loadAsync('./car.glb'),
-                    loader.loadAsync('./barrier.glb')
+                    loader.loadAsync('car.glb'),
+                    loader.loadAsync('barrier.glb')
                 ]);
                 playerModel = pData.scene;
                 barrierModel = bData.scene;
-                
-                const btn = document.getElementById('play-btn-main');
-                btn.innerText = "PLAY";
-                btn.disabled = false;
-                btn.onclick = toggleDiffs;
+                document.getElementById('play-btn-main').innerText = "PLAY";
+                document.getElementById('play-btn-main').disabled = false;
+                document.getElementById('play-btn-main').onclick = toggleDiffs;
             } catch (e) {
-                console.error("Mallien lataus epäonnistui", e);
+                console.error("Models failed", e);
                 document.getElementById('play-btn-main').innerText = "PLAY (NO MODELS)";
                 document.getElementById('play-btn-main').disabled = false;
             }
         }
         loadAssets();
 
-        camera.position.set(0, 6, 11);
-        camera.rotation.x = -0.4;
+        // --- THREE.JS SETUP ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('game-container').appendChild(renderer.domElement);
 
-        // Pelilogiikka
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+        const sun = new THREE.DirectionalLight(0xffffff, 1); sun.position.set(5,15,10); scene.add(sun);
+
+        const roadGroup = new THREE.Group();
+        const road = new THREE.Mesh(new THREE.PlaneGeometry(12, 1000), new THREE.MeshStandardMaterial({ color: 0x333333 }));
+        road.rotation.x = -Math.PI / 2; roadGroup.add(road);
+        scene.add(roadGroup);
+
+        const player = new THREE.Group();
+        scene.add(player);
+
+        camera.position.set(0, 6, 11); camera.rotation.x = -0.4;
+
+        // --- GAME FUNCTIONS ---
         window.startGame = () => {
             player.clear();
             if (playerModel) {
@@ -180,8 +237,7 @@
                 car.scale.set(0.6, 0.6, 0.6);
                 player.add(car);
             } else {
-                const box = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.2), new THREE.MeshStandardMaterial({color: 0xff0000}));
-                player.add(box);
+                player.add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1), new THREE.MeshStandardMaterial({color: 0xff0000})));
             }
             gameActive = true;
             document.getElementById('menu').classList.add('hidden');
@@ -197,52 +253,46 @@
             if (keys.left && player.position.x > -5) player.position.x -= 0.2;
             if (keys.right && player.position.x < 5) player.position.x += 0.2;
 
-            // Kamera seuraa vain X-akselilla
             camera.position.x += (player.position.x - camera.position.x) * 0.1;
 
-            roadGroup.position.z += speed;
-            if (roadGroup.position.z > 20) roadGroup.position.z = 0;
+            roadGroup.position.z += speed; if (roadGroup.position.z > 20) roadGroup.position.z = 0;
 
             if (Math.random() < spawnRate) {
-                let obj;
-                if (barrierModel) {
-                    obj = barrierModel.clone();
-                    obj.position.set((Math.random()-0.5)*10, 0, -150);
-                } else {
-                    obj = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), new THREE.MeshStandardMaterial({color: 0xffdb00}));
-                    obj.position.set((Math.random()-0.5)*10, 0.7, -150);
-                }
-                scene.add(obj);
-                obstacles.push(obj);
+                const obj = barrierModel ? barrierModel.clone() : new THREE.Mesh(new THREE.BoxGeometry(1.5,1.5,1.5), new THREE.MeshStandardMaterial({color: 0xffdb00}));
+                obj.position.set((Math.random()-0.5)*10, 0, -150);
+                scene.add(obj); obstacles.push(obj);
             }
 
             obstacles.forEach((obj, i) => {
                 obj.position.z += speed;
                 if (player.position.distanceTo(obj.position) < 1.5) {
-                    gameActive = false;
+                    gameActive = false; saveRun();
                     document.getElementById('gameover').classList.remove('hidden');
                     document.body.classList.add('paused-blur');
                 }
-                if (obj.position.z > 15) {
-                    scene.remove(obj);
-                    obstacles.splice(i, 1);
-                    score += 10;
-                }
+                if (obj.position.z > 15) { scene.remove(obj); obstacles.splice(i, 1); score += 10; }
             });
 
             document.getElementById('score').innerText = score;
             renderer.render(scene, camera);
         }
 
-        // Kontrollit ja valikot
+        // Muut valikkofunktiot (Save, Settings jne.) pysyvät täysin ennallaan
         window.pauseGame = () => { isPaused = true; document.getElementById('pause-menu').classList.remove('hidden'); document.body.classList.add('paused-blur'); };
         window.resumeGame = () => { isPaused = false; document.getElementById('pause-menu').classList.add('hidden'); document.body.classList.remove('paused-blur'); animate(); };
         window.resetToMenu = () => location.reload();
         window.toggleDiffs = () => { document.getElementById('main-btns').classList.toggle('hidden'); document.getElementById('diff-selection').classList.toggle('hidden'); };
-        window.setDiff = (l, b) => { speed = l==='Easy'?0.4:l==='Medium'?0.6:1.0; document.getElementById('start-confirm').disabled=false; };
+        window.setDiff = (lvl, btn) => { speed = lvl==='Easy'?0.4:lvl==='Medium'?0.6:1.0; document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); document.getElementById('start-confirm').disabled=false; };
+        
+        window.addEventListener('keydown', e => { if(currentBinds.left.includes(e.code)) keys.left=true; if(currentBinds.right.includes(e.code)) keys.right=true; });
+        window.addEventListener('keyup', e => { if(currentBinds.left.includes(e.code)) keys.left=false; if(currentBinds.right.includes(e.code)) keys.right=false; });
 
-        window.addEventListener('keydown', e => { if(e.code==='KeyA') keys.left=true; if(e.code==='KeyD') keys.right=true; });
-        window.addEventListener('keyup', e => { if(e.code==='KeyA') keys.left=false; if(e.code==='KeyD') keys.right=false; });
+        function saveRun() {
+            const runs = JSON.parse(localStorage.getItem('ketchup_best') || '[]');
+            runs.push({ score, date: new Date().toLocaleDateString() });
+            runs.sort((a,b) => b.score - a.score);
+            localStorage.setItem('ketchup_best', JSON.stringify(runs.slice(0,5)));
+        }
     </script>
 </body>
 </html>
