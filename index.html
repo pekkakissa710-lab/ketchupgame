@@ -410,7 +410,7 @@
         };
 
         window.toggleDiffs = () => { document.getElementById('main-btns').classList.toggle('hidden'); document.getElementById('diff-selection').classList.toggle('hidden'); };
-        window.setDiff = (level, btn) => { currentDifficulty = level; document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); document.getElementById('start-confirm').disabled = false; const diffs = { 'Easy': [0.4, 0.02], 'Medium': [0.6, 0.04], 'Hard': [1.8, 0.18], 'Impossible': [3.2, 0.35] }; [speed, spawnRate] = diffs[level]; };
+        window.setDiff = (level, btn) => { currentDifficulty = level; document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected')); btn.classList.add('selected'); document.getElementById('start-confirm').disabled = false; const diffs = { 'Easy': [0.4, 0.02], 'Medium': [0.6, 0.04], 'Hard': [1.0, 0.08], 'Impossible': [3.2, 0.35] }; [speed, spawnRate] = diffs[level]; };
         window.openSettings = () => { document.getElementById('menu').classList.add('hidden'); document.getElementById('settings-menu').classList.remove('hidden'); };
         window.closeSettings = () => { document.getElementById('settings-menu').classList.add('hidden'); document.getElementById('menu').classList.remove('hidden'); };
         window.showBestRuns = () => { document.getElementById('menu').classList.add('hidden'); document.getElementById('best-runs-screen').classList.remove('hidden'); renderRuns(); };
