@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chaos Delivery Extreme</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&subset=latin-ext&display=swap" rel="stylesheet">
+    <style>
+        @font-face{font-family:'Fredoka One';font-style:normal;font-weight:400;src:local('Fredoka One'),local('FredokaOne-Regular');}
+        *{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;outline:none;-webkit-tap-highlight-color:transparent;font-family:'Fredoka One',cursive;box-sizing:border-box;}
+        body{margin:0;overflow:hidden;background:#000;touch-action:none;}
+        #menu-screen{position:fixed;inset:0;background:#8a8a8a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:900;}
+        #menu-inner{display:flex;align-items:center;justify-content:center;width:min(94vw,700px);gap:clamp(10px,4vw,40px);padding:16px;}
+        #menu-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+        #char-canvas-wrap{cursor:grab;touch-action:none;border-radius:8px;overflow:hidden;}
+        #char-canvas-wrap:active{cursor:grabbing;}
+        #username-label{color:#111;font-size:clamp(13px,3.5vw,18px);letter-spacing:1px;margin-top:10px;text-align:center;}
+        #username-input{width:clamp(110px,28vw,170px);padding:6px 10px;border:1.5px solid #bbb;border-radius:6px;font-size:clamp(13px,3vw,16px);background:white;color:#111;font-family:sans-serif;margin-top:4px;-webkit-user-select:text;user-select:text;}
+        #menu-right{flex:1;display:flex;flex-direction:column;gap:clamp(10px,2.5vw,18px);min-width:0;}
+        #game-title{color:white;font-size:clamp(24px,6vw,54px);text-shadow:3px 3px 0 rgba(0,0,0,0.45);text-align:center;line-height:1.1;}
+        .menu-btn{background:white;color:#111;border:none;border-radius:50px;padding:clamp(13px,3.5vw,20px) 16px;font-size:clamp(20px,5vw,30px);cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.25);width:100%;transition:transform .1s;text-align:center;}
+        .menu-btn:active{transform:scale(0.96);}
+        #version-tag{position:fixed;bottom:14px;right:14px;background:rgba(40,30,20,0.65);color:#ccc;font-size:12px;padding:4px 10px;border-radius:6px;z-index:901;}
+        #settings-screen{position:fixed;inset:0;background:#8a8a8a;display:none;flex-direction:column;z-index:910;overflow-y:auto;}
+        #settings-header{display:flex;align-items:center;padding:18px 20px 10px;border-bottom:2px solid rgba(0,0,0,0.15);}
+        #back-btn{background:none;border:none;color:#111;font-size:32px;cursor:pointer;padding:0 14px 0 0;line-height:1;}
+        #settings-title{color:white;font-size:clamp(22px,5vw,36px);text-shadow:2px 2px 0 rgba(0,0,0,0.3);flex:1;text-align:center;}
+        #settings-body{padding:16px 20px 40px;display:flex;flex-direction:column;gap:14px;max-width:600px;margin:0 auto;width:100%;}
+        .setting-group{background:rgba(0,0,0,0.15);border-radius:14px;padding:16px 18px;}
+        .setting-label{color:white;font-size:clamp(15px,3.5vw,19px);text-shadow:1px 1px 0 rgba(0,0,0,0.3);margin-bottom:10px;display:block;}
+        .radio-row{display:flex;gap:8px;flex-wrap:wrap;}
+        .radio-opt{background:rgba(255,255,255,0.25);border:2px solid transparent;color:white;border-radius:30px;padding:8px 18px;font-size:clamp(13px,3vw,16px);cursor:pointer;transition:all .15s;}
+        .radio-opt.active{background:white;color:#111;}
+        .slider-row{display:flex;align-items:center;gap:12px;}
+        .slider-row input[type=range]{flex:1;height:6px;accent-color:#f39c12;cursor:pointer;}
+        .slider-val{color:white;font-size:15px;min-width:42px;text-align:right;}
+        .danger-btn{background:#c0392b;color:white;border:none;border-radius:12px;padding:14px;font-size:clamp(14px,3.5vw,17px);cursor:pointer;width:100%;font-family:'Fredoka One',cursive;}
+        .danger-btn:active{opacity:0.8;}
+        #color-picker{position:fixed;inset:0;background:rgba(0,0,0,0.78);display:none;align-items:center;justify-content:center;z-index:1500;}
+        #color-picker-box{background:#222;border-radius:18px;padding:20px;max-width:310px;width:88%;}
+        #color-picker-title{color:white;font-size:20px;text-align:center;margin-bottom:14px;}
+        #color-swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+        .swatch{width:100%;aspect-ratio:1;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .12s,border-color .12s;}
+        .swatch:active{transform:scale(0.88);}
+        .swatch.selected{border-color:white;transform:scale(1.15);}
+        #color-close{margin-top:14px;background:none;border:2px solid #555;color:#aaa;border-radius:10px;padding:9px 20px;font-size:15px;cursor:pointer;width:100%;font-family:'Fredoka One',cursive;}
+        #confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:5000;display:none;align-items:center;justify-content:center;}
+        #confirm-overlay.show{display:flex;}
+        #confirm-box{background:#1a1a1a;border:2px solid #e74c3c;border-radius:18px;padding:28px 32px;text-align:center;max-width:340px;width:90%;}
+        #confirm-box h2{color:#e74c3c;margin:0 0 10px;font-size:22px;}
+        #confirm-msg{color:#ccc;font-size:14px;margin:0 0 20px;font-family:sans-serif;}
+        .confirm-btns{display:flex;gap:12px;justify-content:center;}
+        .confirm-btns button{padding:10px 24px;border-radius:10px;border:none;font-family:'Fredoka One',cursive;font-size:16px;cursor:pointer;}
+        #confirm-yes{background:#e74c3c;color:white;}
+        #confirm-no{background:#444;color:white;}
+        #pause-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:800;}
+        #pause-title{color:white;font-size:42px;text-shadow:3px 3px 0 rgba(0,0,0,0.4);}
+        .pause-btn{background:white;color:#111;border:none;border-radius:50px;padding:16px 52px;font-size:26px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.4);min-width:220px;}
+        .pause-btn:active{transform:scale(0.96);}
+        #top-ui{position:fixed;top:20px;width:100%;display:flex;flex-direction:column;align-items:center;z-index:100;pointer-events:none;}
+        #money-display{color:#2ecc71;font-size:clamp(24px,6vw,38px);text-shadow:3px 3px 0 #145a32;}
+        #credits-display{color:#f39c12;font-size:clamp(13px,3vw,19px);text-shadow:2px 2px 0 #7d5600;margin-top:1px;}
+        #tutorial{color:white;font-size:15px;text-transform:uppercase;animation:pulse 2s infinite;margin-top:3px;}
+        @keyframes pulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.1);opacity:1}}
+        #orders-badge{position:fixed;top:12px;right:12px;background:#e74c3c;color:white;border-radius:50%;width:20px;height:20px;display:none;align-items:center;justify-content:center;font-size:12px;z-index:103;pointer-events:none;box-shadow:0 0 8px rgba(231,76,60,.8);border:2px solid white;}
+        #orders-badge.visible{display:flex;}
+        #btn-pause{position:fixed;top:20px;left:14px;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.5);color:white;border-radius:10px;font-size:18px;padding:7px 13px;z-index:102;pointer-events:auto;cursor:pointer;}
+        #top-right-btns{position:fixed;top:20px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:102;pointer-events:auto;}
+        .top-btn{color:white;padding:8px 14px;border-radius:10px;border:none;font-family:'Fredoka One',cursive;font-size:13px;cursor:pointer;}
+        #btn-orders{background:#2ecc71;}
+        #btn-shop{background:#e67e22;}
+        #deliver-btn{position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:#2ecc71;color:white;padding:13px 36px;border-radius:50px;display:none;pointer-events:auto;z-index:600;border:none;font-size:18px;box-shadow:0 0 20px #2ecc71;font-family:'Fredoka One',cursive;}
+        #reset-btn{position:fixed;bottom:8px;left:10px;background:rgba(100,0,0,.5);color:rgba(255,255,255,.4);border:1px solid rgba(255,80,80,.3);border-radius:6px;font-size:11px;padding:4px 9px;pointer-events:auto;z-index:600;cursor:pointer;display:none;}
+        #reset-btn:hover{color:white;background:rgba(180,0,0,.8);}
+        #blackout{position:fixed;inset:0;background:black;opacity:0;pointer-events:none;transition:.6s;z-index:2000;}
+        #custom-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:#c0392b;color:white;padding:20px 28px;border-radius:16px;font-size:clamp(15px,3.5vw,22px);text-align:center;z-index:3000;pointer-events:none;transition:transform .25s cubic-bezier(.34,1.56,.64,1);max-width:80vw;border:3px solid #e74c3c;box-shadow:0 0 40px rgba(231,76,60,.7);}
+        #custom-popup.show{transform:translate(-50%,-50%) scale(1);}
+        #notif-popup{position:fixed;top:-130px;left:50%;transform:translateX(-50%);width:min(320px,86vw);background:rgba(30,30,30,.97);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:4000;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.7);border:1.5px solid rgba(255,255,255,.1);transition:top .45s cubic-bezier(.34,1.3,.64,1);}
+        #notif-popup.show{top:16px;}
+        #notif-icon{width:36px;height:36px;background:#2ecc71;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+        #notif-app{color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:.5px;}
+        #notif-title{color:white;font-size:14px;margin-top:1px;}
+        #notif-body{color:#ccc;font-size:12px;margin-top:1px;font-family:sans-serif;}
+        #controls{position:fixed;bottom:28px;width:100%;display:none;justify-content:center;gap:12px;pointer-events:none;z-index:500;}
+        .joy-btn{width:70px;height:70px;background:rgba(255,255,255,.1);border:3px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:28px;pointer-events:auto;}
+        .joy-btn:active{background:rgba(255,255,255,.4);transform:scale(.9);}
+        #orders-panel,#shop-panel{position:fixed;top:0;right:-100%;width:100%;height:100%;background:rgba(0,0,0,.96);transition:.5s cubic-bezier(.85,0,.15,1);z-index:1000;display:flex;flex-direction:column;color:white;pointer-events:auto;}
+        #orders-panel.open,#shop-panel.open{right:0;}
+        #orders-header{padding:22px;text-align:center;border-bottom:2px solid #2ecc71;}
+        #shop-header{padding:22px;text-align:center;border-bottom:2px solid #f39c12;}
+        #orders-list,#shop-content{flex:1;overflow-y:auto;padding:14px;}
+        .order-card{background:#222;margin-bottom:12px;padding:15px;border-radius:12px;border:2px solid #333;display:flex;justify-content:space-between;align-items:center;}
+        .order-card.expiring{border-color:#e74c3c;animation:blink .5s infinite;}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:.6}}
+        .order-reward{font-size:20px;}
+        .reward-low{color:#f1c40f}.reward-mid{color:#e67e22}.reward-high{color:#e74c3c}
+        .reward-badge,.order-timer{font-size:11px;color:#aaa;margin-top:2px;}
+        .order-timer{font-family:sans-serif;font-weight:bold;}
+        .timer-ok{color:#2ecc71}.timer-warn{color:#f39c12}.timer-danger{color:#e74c3c}
+        .order-btns{display:flex;gap:8px;}
+        .btn-small{padding:7px 13px;border-radius:8px;border:none;color:white;font-size:13px;cursor:pointer;font-family:'Fredoka One',cursive;}
+        .shop-stat-box{background:#1a1a2e;border:2px solid #f39c12;border-radius:12px;padding:15px;margin-bottom:14px;text-align:center;}
+        .shop-stat-box .big{font-size:30px;color:#f39c12;}
+        .shop-stat-box .sub{font-size:13px;color:#aaa;margin-top:3px;}
+        .shop-item-card{background:#222;margin-bottom:12px;padding:15px;border-radius:12px;border:2px solid #444;display:flex;justify-content:space-between;align-items:center;}
+        .shop-item-name{font-size:16px;color:#f39c12;}
+        .shop-item-desc{font-size:11px;color:#aaa;margin-top:2px;}
+        .shop-item-price{font-size:16px;color:#2ecc71;}
+        .panel-close-btn{background:none;border:2px solid white;color:white;margin-top:8px;padding:5px 18px;border-radius:9px;font-family:'Fredoka One',cursive;cursor:pointer;font-size:14px;}
+        #receive-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px;}
+        #receive-switch{width:48px;height:26px;background:#555;border-radius:13px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+        #receive-switch.on{background:#2ecc71;}
+        #receive-switch::after{content:'';position:absolute;width:20px;height:20px;background:white;border-radius:50%;top:3px;left:3px;transition:left .2s;}
+        #receive-switch.on::after{left:25px;}
+    </style>
+</head>
+<body>
+
+<div id="menu-screen">
+    <div id="menu-inner">
+        <div id="menu-left">
+            <div id="char-canvas-wrap"></div>
+            <div id="username-label">USERNAME</div>
+            <input id="username-input" type="text" maxlength="18" placeholder="Your name…" autocomplete="off" spellcheck="false">
+        </div>
+        <div id="menu-right">
+            <div id="game-title">CHAOS DELIVERY</div>
+            <button class="menu-btn" id="btn-play">Play</button>
+            <button class="menu-btn" id="btn-settings-open">Settings</button>
+        </div>
+    </div>
+    <div id="version-tag">version 1.0</div>
+</div>
+
+<div id="settings-screen">
+    <div id="settings-header">
+        <button id="back-btn">&#8249;</button>
+        <div id="settings-title">Settings</div>
+        <div style="width:46px;"></div>
+    </div>
+    <div id="settings-body">
+        <div class="setting-group">
+            <span class="setting-label">Camera Distance</span>
+            <div class="radio-row" id="cam-opts">
+                <div class="radio-opt" data-val="12">Close</div>
+                <div class="radio-opt" data-val="18">Medium</div>
+                <div class="radio-opt" data-val="28">Far</div>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Steering Sensitivity</span>
+            <div class="slider-row">
+                <input type="range" id="steer-slider" min="40" max="200" step="5">
+                <span class="slider-val" id="steer-val">100%</span>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">SFX Volume</span>
+            <div class="slider-row">
+                <input type="range" id="sfx-slider" min="0" max="100" step="5">
+                <span class="slider-val" id="sfx-val">100%</span>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Music Volume</span>
+            <div class="slider-row">
+                <input type="range" id="music-slider" min="0" max="100" step="5">
+                <span class="slider-val" id="music-val">50%</span>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Notifications</span>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+                <div id="notif-switch" class="on" style="width:48px;height:26px;background:#2ecc71;border-radius:13px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;"></div>
+                <span style="color:white;font-size:16px;">Show order popups</span>
+            </div>
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Display</span>
+            <button class="danger-btn" id="btn-fullscreen" style="background:#2980b9;">&#x26F6; Enter Fullscreen</button>
+        </div>
+        <div class="setting-group">
+            <span class="setting-label">Data</span>
+            <button class="danger-btn" id="btn-reset">&#9888; Delete All Data</button>
+        </div>
+    </div>
+</div>
+
+<div id="color-picker">
+    <div id="color-picker-box">
+        <div id="color-picker-title">Character Color</div>
+        <div id="color-swatches"></div>
+        <button id="color-close">Close</button>
+    </div>
+</div>
+
+<div id="confirm-overlay">
+    <div id="confirm-box">
+        <h2>&#9888; Reset All Data</h2>
+        <p id="confirm-msg">This will erase all money, credits and progress. Are you sure?</p>
+        <div class="confirm-btns">
+            <button id="confirm-yes">Yes, Delete</button>
+            <button id="confirm-no">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="pause-overlay">
+    <div id="pause-title">PAUSED</div>
+    <button class="pause-btn" id="btn-resume">Resume</button>
+    <button class="pause-btn" id="btn-go-menu">Menu</button>
+</div>
+
+<div id="blackout"></div>
+<div id="custom-popup"></div>
+<div id="notif-popup">
+    <div id="notif-icon">&#x1F6F5;</div>
+    <div><div id="notif-app">Chaos Delivery</div><div id="notif-title">New Order!</div><div id="notif-body">A customer needs you!</div></div>
+</div>
+<div id="top-ui">
+    <div id="money-display">$0</div>
+    <div id="credits-display">&#11088; 0 Credits &nbsp;|&nbsp; Bonus +0%</div>
+    <div id="tutorial">Wait for an order</div>
+</div>
+<button id="btn-pause">&#9646;&#9646;</button>
+<div id="top-right-btns">
+    <button class="top-btn" id="btn-orders">ORDERS</button>
+    <button class="top-btn" id="btn-shop">SHOP &#x1F6CD;</button>
+</div>
+<div id="orders-badge">0</div>
+<div id="orders-panel">
+    <div id="orders-header">
+        <h1 style="color:#2ecc71;margin:0;font-size:24px;">AVAILABLE ORDERS</h1>
+        <div id="receive-row">
+            <span style="color:#aaa;font-size:13px;">Receive orders</span>
+            <div id="receive-switch" class="on"></div>
+        </div>
+        <button class="panel-close-btn" id="btn-orders-close">CLOSE</button>
+    </div>
+    <div id="orders-list"></div>
+</div>
+<div id="shop-panel">
+    <div id="shop-header">
+        <h1 style="color:#f39c12;margin:0;font-size:24px;">UPGRADE SHOP</h1>
+        <div style="color:#aaa;font-size:12px;margin-top:4px;">Credits boost all payout amounts</div>
+        <div style="color:#e74c3c;font-size:11px;margin-top:2px;">&#9888; Prices rise with each purchase!</div>
+        <button class="panel-close-btn" id="btn-shop-close">CLOSE</button>
+    </div>
+    <div id="shop-content"></div>
+</div>
+<button id="deliver-btn">DELIVER NOW</button>
+<button id="reset-btn">Reset data</button>
+
+<div id="controls">
+    <div id="btn-left"  class="joy-btn">&#x2190;</div>
+    <div id="btn-right" class="joy-btn">&#x2192;</div>
+    <div id="btn-up"    class="joy-btn">&#x2191;</div>
+    <div id="btn-down"  class="joy-btn">&#x2193;</div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.167.0/build/three.module.js';
+
+// ═══════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════
+const DEF={camDist:18,steerSens:100,sfxVol:100,musicVol:50,charColor:'#d0d0d0',username:''};
+const get=k=>localStorage.getItem('cde_'+k)??String(DEF[k]);
+const set=(k,v)=>localStorage.setItem('cde_'+k,String(v));
+
+let camDist   =parseFloat(get('camDist'));
+let steerSens =parseFloat(get('steerSens'))/100;
+let sfxVol    =parseFloat(get('sfxVol'))/100;
+let musicVol  =parseFloat(get('musicVol'))/100;
+let charColor =get('charColor');
+let username  =get('username');
+
+let money    =parseInt(localStorage.getItem('deliveryMoney'))||0;
+let credits  =parseInt(localStorage.getItem('deliveryCredits'))||0;
+let priceMult=parseFloat(localStorage.getItem('deliveryCreditMult'))||1;
+let showNotifPopups = localStorage.getItem('cde_showNotif') !== 'false';
+
+const creditBonus=()=>credits*0.08;
+const applyBonus=r=>Math.round(r*(1+creditBonus()));
+const pkgPrice=pkg=>Math.round(pkg.base*priceMult);
+
+function updateMoney(v){
+    money+=v; localStorage.setItem('deliveryMoney',money);
+    document.getElementById('money-display').textContent='$'+money;
+}
+function updateCredits(v){
+    credits+=v; localStorage.setItem('deliveryCredits',credits);
+    document.getElementById('credits-display').textContent=
+        '\u2B50 '+credits+' Credits \u00a0|\u00a0 Bonus +'+Math.round(creditBonus()*100)+'%';
+}
+
+// ═══════════════════════════════════════════════
+// COLORS + CONFIG
+// ═══════════════════════════════════════════════
+const COLORS=[
+    '#e8e8e8','#aaaaaa','#555555','#111111',
+    '#e74c3c','#e67e22','#f1c40f','#2ecc71',
+    '#1abc9c','#3498db','#9b59b6','#e91e63',
+    '#ff5722','#00bcd4','#8bc34a','#ff9800',
+    '#607d8b','#795548','#ff4081','#00e5ff',
+];
+
+const CFG={
+    STEER:0.032, ACCEL:0.025, FRIC:0.98,
+    DELIVER_R:12, ORDER_IV:15000, MAX_ORDERS:5,
+    EXP_SCALE:15, EXP_FRAMES:50, CRASH_THR:0.65,
+    CHUNK:220, CHUNK_R:3, CHUNK_B:5,
+};
+
+const TIERS=[
+    {reward:100,label:'Nearby',  minF:0.0,maxF:0.25,timer:15000,isFar:false},
+    {reward:150,label:'Short',   minF:0.1,maxF:0.35,timer:20000,isFar:false},
+    {reward:200,label:'Medium',  minF:0.25,maxF:0.55,timer:35000,isFar:false},
+    {reward:300,label:'Long',    minF:0.45,maxF:0.75,timer:60000,isFar:true},
+    {reward:400,label:'Far',     minF:0.65,maxF:0.88,timer:90000,isFar:true},
+    {reward:500,label:'Extreme!',minF:0.82,maxF:1.0, timer:180000,isFar:true},
+];
+
+const SHOP=[
+    {id:1,credits:1, base:100, label:'Starter Pack', desc:'1 Credit — +8% bonus'},
+    {id:2,credits:3, base:250, label:'Hustler Pack', desc:'3 Credits — +24% bonus'},
+    {id:3,credits:5, base:380, label:'Pro Pack',     desc:'5 Credits — +40% bonus'},
+    {id:4,credits:10,base:650, label:'Mogul Pack',   desc:'10 Credits — +80% bonus'},
+    {id:5,credits:25,base:1400,label:'Tycoon Pack',  desc:'25 Credits — +200% bonus'},
+];
+
+const FN=["James","John","Robert","Michael","William","David","Richard","Joseph","Thomas","Charles","Christopher","Daniel","Matthew","Anthony","Mark","Donald","Steven","Paul","Andrew","Joshua","Kenneth","Kevin","Brian","George","Timothy","Ronald","Edward","Jason","Jeffrey","Ryan","Jacob","Gary","Nicholas","Eric","Jonathan","Stephen","Larry","Justin","Scott","Brandon","Benjamin","Samuel","Frank","Alexander","Jack","Dennis","Tyler","Aaron","Adam","Nathan","Zachary","Peter","Kyle","Ethan","Jeremy","Harold","Terry","Sean","Austin","Gerald","Carl","Arthur","Dylan","Jesse","Jordan","Bryan","Billy","Joe","Bruce","Albert","Gabriel","Logan","Alan","Wayne","Roy","Ralph","Randy","Eugene","Vincent","Russell","Elijah","Louis","Bobby","Philip","Johnny","Mary","Patricia","Jennifer","Linda","Barbara","Elizabeth","Susan","Jessica","Sarah","Karen","Lisa","Nancy","Betty","Sandra","Ashley","Dorothy","Kimberly","Emily","Donna","Michelle","Carol","Amanda","Melissa","Deborah","Stephanie","Rebecca","Sharon","Laura","Cynthia","Amy","Angela","Anna","Brenda","Pamela","Emma","Nicole","Helen","Samantha","Katherine","Christine","Rachel","Carolyn","Janet","Maria","Heather","Diane","Julie","Victoria","Kelly","Christina","Joan","Evelyn","Lauren","Olivia","Frances","Martha","Cheryl","Megan","Andrea","Hannah","Jacqueline","Ann","Alice","Kathryn","Gloria","Teresa","Doris","Sara","Janice","Julia","Marie","Madison","Grace","Judy","Theresa","Beverly","Denise","Marilyn","Amber","Danielle","Brittany","Rose","Diana","Abigail","Virginia"];
+const LN=["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin","Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson","Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores","Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts","Turner","Phillips","Evans","Diaz","Parker","Cruz","Edwards","Collins","Reyes","Stewart","Morris","Morales","Murphy","Cook","Rogers","Gutierrez","Ortiz","Morgan","Cooper","Peterson","Bailey","Reed","Kelly","Howard","Ramos","Kim","Cox","Ward","Richardson","Watson","Brooks","Chavez","Wood","James","Bennett","Gray","Mendoza","Ruiz","Hughes","Price","Alvarez","Castillo","Sanders","Patel","Myers","Long","Ross","Foster","Jimenez","Powell"];
+const NAMES=Array.from({length:200},()=>FN[Math.random()*FN.length|0]+' '+LN[Math.random()*LN.length|0]);
+
+// ═══════════════════════════════════════════════
+// PROCEDURAL MODEL BUILDERS
+// ═══════════════════════════════════════════════
+
+// Helper: create a mesh with a given geometry and color
+function mkMesh(geo, color){
+    return new THREE.Mesh(geo, new THREE.MeshStandardMaterial({color:new THREE.Color(color),roughness:0.7,metalness:0.05}));
+}
+
+// Build a humanoid character group with named bone groups
+// Bone names used by animation code: LeftUpLeg, RightUpLeg, LeftArm, RightArm, RightForeArm
+function buildHumanoid(baseColor){
+    const root = new THREE.Group();
+    const col = baseColor || '#d0d0d0';
+    const skinCol = '#f5cba7';
+
+    // Body (torso)
+    const torso = mkMesh(new THREE.BoxGeometry(0.55,0.65,0.3), col);
+    torso.position.set(0, 0.9, 0);
+    torso.castShadow = true;
+    root.add(torso);
+
+    // Head
+    const head = mkMesh(new THREE.BoxGeometry(0.38,0.38,0.35), skinCol);
+    head.position.set(0, 1.45, 0);
+    head.castShadow = true;
+    root.add(head);
+
+    // Eyes
+    const eyeGeo = new THREE.BoxGeometry(0.07,0.07,0.04);
+    const eyeMat = new THREE.MeshStandardMaterial({color:0x111111});
+    const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+    const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+    eyeL.position.set(-0.1, 1.5, 0.18);
+    eyeR.position.set(0.1, 1.5, 0.18);
+    root.add(eyeL, eyeR);
+
+    // Left arm bone group
+    const LeftArm = new THREE.Group();
+    LeftArm.name = 'LeftArm';
+    LeftArm.position.set(-0.38, 1.15, 0);
+    const lArmMesh = mkMesh(new THREE.BoxGeometry(0.18,0.5,0.18), col);
+    lArmMesh.position.set(0, -0.25, 0);
+    lArmMesh.castShadow = true;
+    LeftArm.add(lArmMesh);
+    root.add(LeftArm);
+
+    // Right arm bone group
+    const RightArm = new THREE.Group();
+    RightArm.name = 'RightArm';
+    RightArm.position.set(0.38, 1.15, 0);
+    const rArmMesh = mkMesh(new THREE.BoxGeometry(0.18,0.5,0.18), col);
+    rArmMesh.position.set(0, -0.25, 0);
+    rArmMesh.castShadow = true;
+    RightArm.add(rArmMesh);
+    root.add(RightArm);
+
+    // Right forearm (child of RightArm for wave animation)
+    const RightForeArm = new THREE.Group();
+    RightForeArm.name = 'RightForeArm';
+    RightForeArm.position.set(0, -0.5, 0);
+    const rForeArmMesh = mkMesh(new THREE.BoxGeometry(0.16,0.4,0.16), skinCol);
+    rForeArmMesh.position.set(0, -0.2, 0);
+    rForeArmMesh.castShadow = true;
+    RightForeArm.add(rForeArmMesh);
+    RightArm.add(RightForeArm);
+
+    // Left forearm (child of LeftArm)
+    const LeftForeArm = new THREE.Group();
+    LeftForeArm.name = 'LeftForeArm';
+    LeftForeArm.position.set(0, -0.5, 0);
+    const lForeArmMesh = mkMesh(new THREE.BoxGeometry(0.16,0.4,0.16), skinCol);
+    lForeArmMesh.position.set(0, -0.2, 0);
+    lForeArmMesh.castShadow = true;
+    LeftForeArm.add(lForeArmMesh);
+    LeftArm.add(LeftForeArm);
+
+    // Left upper leg bone group
+    const LeftUpLeg = new THREE.Group();
+    LeftUpLeg.name = 'LeftUpLeg';
+    LeftUpLeg.position.set(-0.16, 0.58, 0);
+    const lLegMesh = mkMesh(new THREE.BoxGeometry(0.22,0.46,0.22), col);
+    lLegMesh.position.set(0, -0.23, 0);
+    lLegMesh.castShadow = true;
+    LeftUpLeg.add(lLegMesh);
+    // Lower leg
+    const lLowerLeg = mkMesh(new THREE.BoxGeometry(0.2,0.4,0.2), skinCol);
+    lLowerLeg.position.set(0, -0.65, 0);
+    lLowerLeg.castShadow = true;
+    LeftUpLeg.add(lLowerLeg);
+    root.add(LeftUpLeg);
+
+    // Right upper leg bone group
+    const RightUpLeg = new THREE.Group();
+    RightUpLeg.name = 'RightUpLeg';
+    RightUpLeg.position.set(0.16, 0.58, 0);
+    const rLegMesh = mkMesh(new THREE.BoxGeometry(0.22,0.46,0.22), col);
+    rLegMesh.position.set(0, -0.23, 0);
+    rLegMesh.castShadow = true;
+    RightUpLeg.add(rLegMesh);
+    // Lower leg
+    const rLowerLeg = mkMesh(new THREE.BoxGeometry(0.2,0.4,0.2), skinCol);
+    rLowerLeg.position.set(0, -0.65, 0);
+    rLowerLeg.castShadow = true;
+    RightUpLeg.add(rLowerLeg);
+    root.add(RightUpLeg);
+
+    return root;
+}
+
+// Build a procedural car
+function buildCar(){
+    const root = new THREE.Group();
+    const bodyCol = 0xe74c3c;
+    const wheelCol = 0x222222;
+    const windowCol = 0x85c1e9;
+
+    // Main car body (lower)
+    const bodyLow = mkMesh(new THREE.BoxGeometry(2.2, 0.55, 4.5), bodyCol);
+    bodyLow.position.set(0, 0.55, 0);
+    bodyLow.castShadow = true;
+    root.add(bodyLow);
+
+    // Car roof/cabin
+    const cabin = mkMesh(new THREE.BoxGeometry(1.7, 0.6, 2.2), bodyCol);
+    cabin.position.set(0, 1.15, -0.2);
+    cabin.castShadow = true;
+    root.add(cabin);
+
+    // Windshield (front)
+    const windshield = mkMesh(new THREE.BoxGeometry(1.5, 0.5, 0.05), windowCol);
+    windshield.position.set(0, 1.1, 0.9);
+    root.add(windshield);
+
+    // Rear window
+    const rearWin = mkMesh(new THREE.BoxGeometry(1.5, 0.5, 0.05), windowCol);
+    rearWin.position.set(0, 1.1, -1.3);
+    root.add(rearWin);
+
+    // Side windows
+    const sideWinL = mkMesh(new THREE.BoxGeometry(0.05, 0.45, 1.8), windowCol);
+    sideWinL.position.set(-0.88, 1.1, -0.2);
+    root.add(sideWinL);
+    const sideWinR = mkMesh(new THREE.BoxGeometry(0.05, 0.45, 1.8), windowCol);
+    sideWinR.position.set(0.88, 1.1, -0.2);
+    root.add(sideWinR);
+
+    // Headlights
+    const lightMat = new THREE.MeshStandardMaterial({color:0xffffaa,emissive:0xffff88,emissiveIntensity:0.4});
+    const headL = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,0.05), lightMat);
+    const headR = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,0.05), lightMat);
+    headL.position.set(-0.7, 0.65, 2.28);
+    headR.position.set(0.7, 0.65, 2.28);
+    root.add(headL, headR);
+
+    // Taillights
+    const tailMat = new THREE.MeshStandardMaterial({color:0xff2200,emissive:0xff0000,emissiveIntensity:0.4});
+    const tailL = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,0.05), tailMat);
+    const tailR = new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,0.05), tailMat);
+    tailL.position.set(-0.7, 0.65, -2.28);
+    tailR.position.set(0.7, 0.65, -2.28);
+    root.add(tailL, tailR);
+
+    // Wheels (4)
+    const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.32, 16);
+    const wheelMat = new THREE.MeshStandardMaterial({color:wheelCol,roughness:0.9});
+    const rimMat = new THREE.MeshStandardMaterial({color:0xcccccc,metalness:0.6,roughness:0.3});
+    const rimGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.35, 8);
+
+    const wPos = [
+        [-1.15, 0.42, 1.4],
+        [1.15, 0.42, 1.4],
+        [-1.15, 0.42, -1.4],
+        [1.15, 0.42, -1.4],
+    ];
+    wPos.forEach(([x,y,z])=>{
+        const w = new THREE.Mesh(wheelGeo, wheelMat);
+        w.rotation.z = Math.PI/2;
+        w.position.set(x, y, z);
+        w.castShadow = true;
+        root.add(w);
+        const rim = new THREE.Mesh(rimGeo, rimMat);
+        rim.rotation.z = Math.PI/2;
+        rim.position.set(x, y, z);
+        root.add(rim);
+    });
+
+    // Delivery box on roof
+    const box = mkMesh(new THREE.BoxGeometry(1.0, 0.6, 1.0), 0xcd853f);
+    box.position.set(0, 1.58, -0.2);
+    box.castShadow = true;
+    root.add(box);
+
+    return root;
+}
+
+// Apply a hex color to all meshes in a model
+function applyColor(root, hexColor){
+    if(!root) return;
+    const col = new THREE.Color(hexColor);
+    root.traverse(obj=>{
+        if(!obj.isMesh) return;
+        // Only recolor non-special materials (skip windows, lights, wheels, skin)
+        const mc = obj.material.color;
+        const isSpecial = (
+            obj.material.emissiveIntensity > 0 ||
+            obj.material.color.equals(new THREE.Color(0x85c1e9)) ||
+            obj.material.color.equals(new THREE.Color(0x222222)) ||
+            obj.material.color.equals(new THREE.Color(0xf5cba7)) ||
+            obj.material.color.equals(new THREE.Color('#f5cba7'))
+        );
+        if(!isSpecial){
+            obj.material = obj.material.clone();
+            obj.material.color = col;
+        }
+    });
+}
+
+function applyCharColorAll(){
+    // Rebuild menu character so new color is fully applied
+    if(menuScene && menuChar){
+        menuScene.remove(menuChar);
+        menuChar = buildHumanoid(charColor);
+        menuScene.add(menuChar);
+    }
+    applyColor(player, charColor);
+    applyColor(ragdollModel, charColor);
+}
+
+// ═══════════════════════════════════════════════
+// AUDIO
+// ═══════════════════════════════════════════════
+const _expAudio = new Audio('explosion.mp3');
+const _notifAudio = new Audio('notification.mp3');
+const _bgMusic = new Audio('bgmusic.mp3');
+_bgMusic.loop = true;
+_bgMusic.volume = 0.5;
+
+function playExplosionSound(){
+    try{
+        const s = _expAudio.cloneNode();
+        s.volume = Math.min(1, sfxVol);
+        s.play().catch(()=>{});
+    }catch(e){}
+}
+function playNotifSound(){
+    try{
+        const s = _notifAudio.cloneNode();
+        s.volume = Math.min(1, sfxVol);
+        s.play().catch(()=>{});
+    }catch(e){}
+}
+function startBgMusic(){
+    _bgMusic.volume = Math.min(1, musicVol);
+    _bgMusic.play().catch(()=>{});
+}
+function stopBgMusic(){
+    _bgMusic.pause();
+    _bgMusic.currentTime = 0;
+}
+
+// ═══════════════════════════════════════════════
+// MENU THREE.JS
+// ═══════════════════════════════════════════════
+const menuW=()=>Math.min(window.innerWidth*0.38,220);
+const menuH=()=>Math.min(window.innerWidth*0.55,300);
+
+let menuRenderer=null, menuScene=null, menuCam=null, menuChar=null, menuWrap=null;
+let menuRotY=0,menuSpin=true,menuDragX=0,menuDragTotal=0,menuDragging=false;
+
+try{
+    menuRenderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+    menuRenderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    menuRenderer.setClearColor(0x000000,0);
+    menuRenderer.setSize(menuW(),menuH());
+    menuWrap=document.getElementById('char-canvas-wrap');
+    menuWrap.appendChild(menuRenderer.domElement);
+    menuWrap.style.width=menuW()+'px'; menuWrap.style.height=menuH()+'px';
+
+    menuScene=new THREE.Scene();
+    menuCam=new THREE.PerspectiveCamera(45,menuW()/menuH(),.01,100);
+    menuCam.position.set(0,0.9,4);
+    menuCam.lookAt(0,0.9,0);
+    menuScene.add(new THREE.AmbientLight(0xffffff,1.4));
+    const mSun=new THREE.DirectionalLight(0xffffff,2.0); mSun.position.set(3,6,5); menuScene.add(mSun);
+    const mFill=new THREE.DirectionalLight(0xffffff,0.7); mFill.position.set(-4,2,-3); menuScene.add(mFill);
+
+    menuChar=buildHumanoid(charColor);
+    menuScene.add(menuChar);
+
+    const menuCanvas=menuRenderer.domElement;
+    menuCanvas.addEventListener('pointerdown',e=>{
+        menuDragging=true; menuSpin=false;
+        menuDragX=e.clientX; menuDragTotal=0; e.preventDefault();
+    },{passive:false});
+    window.addEventListener('pointermove',e=>{
+        if(!menuDragging) return;
+        const dx=e.clientX-menuDragX; menuDragTotal+=Math.abs(dx);
+        menuRotY+=dx*0.013; menuDragX=e.clientX;
+    });
+    window.addEventListener('pointerup',()=>{
+        if(!menuDragging) return;
+        menuDragging=false;
+        if(menuDragTotal<6) showColorPicker();
+    });
+}catch(e){ console.warn('Menu preview unavailable:',e); }
+
+// Color picker
+function buildColorPicker(){
+    const cont=document.getElementById('color-swatches'); cont.innerHTML='';
+    COLORS.forEach(c=>{
+        const d=document.createElement('div'); d.className='swatch'; d.dataset.color=c;
+        d.style.background=c; if(c===charColor) d.classList.add('selected');
+        d.addEventListener('pointerdown',e=>{
+            charColor=c; set('charColor',c);
+            applyCharColorAll();
+            document.querySelectorAll('.swatch').forEach(s=>s.classList.toggle('selected',s.dataset.color===c));
+            e.stopPropagation();
+        });
+        cont.appendChild(d);
+    });
+}
+function showColorPicker(){buildColorPicker();document.getElementById('color-picker').style.display='flex';}
+document.getElementById('color-close').onclick=()=>document.getElementById('color-picker').style.display='none';
+
+// Settings UI
+function initSettingsUI(){
+    document.querySelectorAll('#cam-opts .radio-opt').forEach(el=>
+        el.classList.toggle('active',parseInt(el.dataset.val)===camDist));
+    const ss=document.getElementById('steer-slider');
+    ss.value=Math.round(steerSens*100); document.getElementById('steer-val').textContent=ss.value+'%';
+    const sv=document.getElementById('sfx-slider');
+    sv.value=Math.round(sfxVol*100); document.getElementById('sfx-val').textContent=sv.value+'%';
+    const mv=document.getElementById('music-slider');
+    mv.value=Math.round(musicVol*100); document.getElementById('music-val').textContent=mv.value+'%';
+}
+document.querySelectorAll('#cam-opts .radio-opt').forEach(el=>el.addEventListener('pointerdown',()=>{
+    camDist=parseInt(el.dataset.val); set('camDist',camDist); initSettingsUI();
+}));
+document.getElementById('steer-slider').addEventListener('input',function(){
+    steerSens=this.value/100; set('steerSens',this.value); document.getElementById('steer-val').textContent=this.value+'%';
+});
+document.getElementById('sfx-slider').addEventListener('input',function(){
+    sfxVol=this.value/100; set('sfxVol',this.value); document.getElementById('sfx-val').textContent=this.value+'%';
+});
+document.getElementById('music-slider').addEventListener('input',function(){
+    musicVol=this.value/100; set('musicVol',this.value); document.getElementById('music-val').textContent=this.value+'%';
+    _bgMusic.volume = Math.min(1, musicVol);
+});
+
+// Notification toggle
+(()=>{
+    const sw=document.getElementById('notif-switch');
+    function refreshSwitch(){
+        sw.style.background=showNotifPopups?'#2ecc71':'#555';
+        sw.style.paddingLeft=showNotifPopups?'22px':'2px';
+    }
+    refreshSwitch();
+    sw.addEventListener('pointerdown',()=>{
+        showNotifPopups=!showNotifPopups;
+        localStorage.setItem('cde_showNotif',showNotifPopups);
+        refreshSwitch();
+    });
+})();
+
+// Fullscreen toggle
+function updateFullscreenBtn(){
+    const btn=document.getElementById('btn-fullscreen');
+    if(btn) btn.textContent=(document.fullscreenElement||document.webkitFullscreenElement)?'⛶ Exit Fullscreen':'⛶ Enter Fullscreen';
+}
+document.getElementById('btn-fullscreen').addEventListener('click',()=>{
+    if(document.fullscreenElement||document.webkitFullscreenElement){
+        (document.exitFullscreen||document.webkitExitFullscreen).call(document).catch(()=>{});
+    } else {
+        (document.documentElement.requestFullscreen||document.documentElement.webkitRequestFullscreen).call(document.documentElement).catch(()=>{});
+    }
+});
+document.addEventListener('fullscreenchange',updateFullscreenBtn);
+document.addEventListener('webkitfullscreenchange',updateFullscreenBtn);
+
+document.getElementById('btn-settings-open').addEventListener('click',()=>{
+    document.getElementById('settings-screen').style.display='flex';
+    updateFullscreenBtn();
+    initSettingsUI();
+});
+document.getElementById('back-btn').addEventListener('click',()=>
+    document.getElementById('settings-screen').style.display='none');
+
+// Username
+const unInput=document.getElementById('username-input');
+unInput.value=username;
+unInput.addEventListener('input',()=>{username=unInput.value;set('username',username);});
+unInput.addEventListener('pointerdown',e=>e.stopPropagation());
+
+// ═══════════════════════════════════════════════
+// GAME THREE.JS
+// ═══════════════════════════════════════════════
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x87ceeb);
+scene.fog=new THREE.Fog(0x87ceeb,500,1400);
+
+const camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,.1,2000);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+renderer.domElement.style.position='fixed';
+renderer.domElement.style.top='0';
+renderer.domElement.style.left='0';
+renderer.domElement.style.display='none';
+
+// Lights
+scene.add(new THREE.AmbientLight(0xfff5e0,.55));
+const SUN=new THREE.Vector3(200,300,150);
+const sun=new THREE.DirectionalLight(0xfffbe8,1.4);
+sun.position.copy(SUN); sun.castShadow=true;
+sun.shadow.mapSize.width=sun.shadow.mapSize.height=2048;
+sun.shadow.camera.near=1; sun.shadow.camera.far=3000;
+sun.shadow.camera.left=sun.shadow.camera.bottom=-800;
+sun.shadow.camera.right=sun.shadow.camera.top=800;
+sun.shadow.bias=-.0005; scene.add(sun);
+const sph=new THREE.Mesh(new THREE.SphereGeometry(18,16,16),new THREE.MeshBasicMaterial({color:0xfffacd}));
+sph.position.copy(SUN); scene.add(sph);
+
+// Ground (city streets feel with alternating tiles)
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(20000,20000),new THREE.MeshStandardMaterial({color:0x3a3a3a}));
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+
+// Road markings (simple lines on the ground)
+const roadMat = new THREE.MeshStandardMaterial({color:0xffffff,roughness:1});
+for(let i=-10;i<=10;i++){
+    for(let j=0;j<5;j++){
+        const dash=new THREE.Mesh(new THREE.PlaneGeometry(0.3,4),roadMat);
+        dash.rotation.x=-Math.PI/2;
+        dash.position.set(i*22, 0.01, j*8-16);
+        scene.add(dash);
+    }
+}
+
+// Chunks / buildings
+const buildings=[];
+const doneChunks=new Set();
+
+// Building texture
+const _bldTex = new THREE.TextureLoader().load('building.png');
+_bldTex.wrapS = _bldTex.wrapT = THREE.RepeatWrapping;
+
+function genChunk(cx,cz){
+    const key=cx+','+cz; if(doneChunks.has(key)) return; doneChunks.add(key);
+    const ox=cx*CFG.CHUNK, oz=cz*CFG.CHUNK;
+    const n=CFG.CHUNK_B+Math.floor(Math.random()*4);
+    for(let i=0;i<n;i++){
+        const h=30+Math.random()*65;
+        const w=15+Math.random()*12;
+        const d=15+Math.random()*12;
+        const rx=ox+(Math.random()-.5)*CFG.CHUNK*.82;
+        const rz=oz+(Math.random()-.5)*CFG.CHUNK*.82;
+        if(Math.abs(rx)<55&&Math.abs(rz)<55) continue;
+        const tex=_bldTex.clone(); tex.needsUpdate=true;
+        tex.repeat.set(Math.round(w/8), Math.round(h/8));
+        const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
+            new THREE.MeshStandardMaterial({map:tex,roughness:0.85,metalness:0.02}));
+        b.position.set(rx,h/2,rz); b.castShadow=true; b.receiveShadow=true;
+        // Rooftop accent
+        const roof=new THREE.Mesh(new THREE.BoxGeometry(w+0.5,0.8,d+0.5),
+            new THREE.MeshStandardMaterial({color:0x555555}));
+        roof.position.set(rx,h+0.4,rz);
+        scene.add(b,roof);
+        buildings.push({mesh:b,box:new THREE.Box3().setFromObject(b)});
+    }
+}
+function updateChunks(){
+    if(!car) return;
+    const cx=Math.floor(car.position.x/CFG.CHUNK), cz=Math.floor(car.position.z/CFG.CHUNK);
+    for(let dx=-CFG.CHUNK_R;dx<=CFG.CHUNK_R;dx++)
+        for(let dz=-CFG.CHUNK_R;dz<=CFG.CHUNK_R;dz++) genChunk(cx+dx,cz+dz);
+}
+for(let dx=-3;dx<=3;dx++) for(let dz=-3;dz<=3;dz++) genChunk(dx,dz);
+
+// Models — all procedural
+let car=null, player=null, humanCustomer=null, ragdollModel=null;
+let walkBones={}, waveBones={};
+
+// Car
+car = buildCar();
+car.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+scene.add(car);
+
+// Player (delivery person)
+player = buildHumanoid(charColor);
+player.visible = false;
+player.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+scene.add(player);
+['LeftUpLeg','RightUpLeg','LeftArm','RightArm'].forEach(n=>{
+    walkBones[n]=player.getObjectByName(n);
+});
+
+// Ragdoll (same model, separate instance)
+ragdollModel = buildHumanoid(charColor);
+ragdollModel.visible = false;
+ragdollModel.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+scene.add(ragdollModel);
+
+// NPC color palette (vivid, distinct from player)
+const NPC_COLORS=['#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e91e63','#ff5722','#00bcd4','#8bc34a','#ff9800','#607d8b','#ff4081','#00e5ff','#795548'];
+
+// Customer humanoid
+humanCustomer = buildHumanoid(NPC_COLORS[Math.floor(Math.random()*NPC_COLORS.length)]);
+humanCustomer.visible = false;
+humanCustomer.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+scene.add(humanCustomer);
+['RightArm','RightForeArm','LeftUpLeg','RightUpLeg'].forEach(n=>{
+    waveBones[n]=humanCustomer.getObjectByName(n);
+});
+
+// Package box
+const pkgBox=new THREE.Mesh(new THREE.BoxGeometry(.7,.4,.7),new THREE.MeshStandardMaterial({color:0xcd853f}));
+pkgBox.visible=false; pkgBox.castShadow=true; scene.add(pkgBox);
+
+// Explosion sprite texture from file
+const expTex = new THREE.TextureLoader().load('explosion.png');
+
+// Trail
+const trailMat=new THREE.LineBasicMaterial({color:0x00ff00});
+let trailLine=null;
+function updateTrail(){
+    if(trailLine){scene.remove(trailLine);trailLine.geometry.dispose();trailLine=null;}
+    if(!activeMission||!car) return;
+    const g=new THREE.BufferGeometry().setFromPoints([car.position.clone(),deliveryZone.position.clone()]);
+    trailLine=new THREE.Line(g,trailMat); scene.add(trailLine);
+}
+
+// Delivery zone
+const deliveryZone=new THREE.Mesh(new THREE.CylinderGeometry(8,8,.5,32),
+    new THREE.MeshStandardMaterial({color:0x00ff00,transparent:true,opacity:.3}));
+deliveryZone.visible=false; scene.add(deliveryZone);
+
+// ── Popups ──
+let popTO=null;
+function showPopup(msg){
+    const p=document.getElementById('custom-popup');
+    p.textContent=msg||'Finish your current delivery first!';
+    p.classList.add('show');
+    if(popTO) clearTimeout(popTO);
+    popTO=setTimeout(()=>p.classList.remove('show'),2600);
+}
+let notifTO=null;
+function showNotif(title,body){
+    if(!showNotifPopups) return;
+    document.getElementById('notif-title').textContent=title;
+    document.getElementById('notif-body').textContent=body;
+    const el=document.getElementById('notif-popup'); el.classList.add('show');
+    if(notifTO) clearTimeout(notifTO);
+    notifTO=setTimeout(()=>el.classList.remove('show'),3500);
+}
+// Swipe up to dismiss notification
+(()=>{
+    const el=document.getElementById('notif-popup');
+    let sy=0;
+    el.addEventListener('pointerdown',e=>{sy=e.clientY;},{passive:true});
+    el.addEventListener('pointerup',e=>{
+        if(sy-e.clientY>40){el.classList.remove('show');if(notifTO)clearTimeout(notifTO);}
+    },{passive:true});
+})();
+function updateBadge(){
+    const b=document.getElementById('orders-badge');
+    pendingOrders.length>0?(b.textContent=pendingOrders.length,b.classList.add('visible')):b.classList.remove('visible');
+}
+
+// ── Explosions ──
+let exps=[];
+function spawnExp(pos){
+    playExplosionSound();
+    const m=new THREE.SpriteMaterial({map:expTex,transparent:true,depthTest:false});
+    const s=new THREE.Sprite(m); s.position.copy(pos); s.position.y+=3;
+    s.scale.set(CFG.EXP_SCALE,CFG.EXP_SCALE,1); scene.add(s); exps.push({obj:s,t:0});
+}
+function updateExps(){
+    const step=1/CFG.EXP_FRAMES;
+    for(let i=exps.length-1;i>=0;i--){
+        const e=exps[i]; e.t+=step;
+        const sc=CFG.EXP_SCALE*Math.sin(e.t*Math.PI)*2.5+CFG.EXP_SCALE*.5;
+        e.obj.scale.set(sc,sc,1);
+        e.obj.material.opacity=e.t<.5?1:1-(e.t-.5)*2;
+        if(e.t>=1){scene.remove(e.obj);e.obj.material.dispose();exps.splice(i,1);}
+    }
+}
+
+// ── findClearSpot ──
+function findClearSpot(near){
+    for(let ring=1;ring<=10;ring++){
+        const step=ring*7, steps=Math.max(6,ring*4);
+        for(let i=0;i<steps;i++){
+            const a=(i/steps)*Math.PI*2;
+            const x=near.x+Math.cos(a)*step, z=near.z+Math.sin(a)*step;
+            const tb=new THREE.Box3(new THREE.Vector3(x-3.5,0,z-3.5),new THREE.Vector3(x+3.5,3,z+3.5));
+            if(!buildings.some(b=>b.box.intersectsBox(tb))) return new THREE.Vector3(x,0,z);
+        }
+    }
+    return near.clone().add(new THREE.Vector3(35,0,0));
+}
+
+// ── Ragdoll ──
+let ragActive=false, ragTimer=0;
+const ragPos=new THREE.Vector3(), ragVel=new THREE.Vector3(), ragAngVel=new THREE.Vector3();
+const RAG={LIFE:240,GRAV:.018,BOUNCE:.30,FRIC:.78,RAD:1.0};
+
+function launchRagdoll(startPos,vx,vz){
+    if(!ragdollModel) return;
+    if(activeMission&&money>0){
+        const fee=Math.round(money*.2);
+        if(fee>0){updateMoney(-fee);showPopup('CRASHED! \u2013$'+fee+' crash fee (20%)');}
+    }
+    ragActive=true; ragTimer=0;
+    ragPos.set(startPos.x,startPos.y+.5,startPos.z);
+    const cap=2.5;
+    ragVel.set(Math.max(-cap,Math.min(cap,vx)),1.0+Math.random()*.6,Math.max(-cap,Math.min(cap,vz)));
+    const sp=()=>(Math.random()>.5?1:-1)*(.12+Math.random()*.14);
+    ragAngVel.set(sp(),sp(),sp());
+    ragdollModel.position.copy(ragPos);
+    ragdollModel.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI);
+    ragdollModel.visible=true;
+}
+function updateRagdoll(){
+    if(!ragActive||!ragdollModel) return;
+    ragTimer++;
+    if(ragTimer>RAG.LIFE){
+        ragdollModel.visible=false; ragActive=false;
+        if(car){car.position.set(0,0,0);car.visible=true;}
+        isFlying=false; speed=0; carAngle=0; return;
+    }
+    ragVel.y-=RAG.GRAV; ragVel.multiplyScalar(.994); ragPos.add(ragVel);
+    if(ragPos.y<.5){ragPos.y=.5;ragVel.y=Math.abs(ragVel.y)*RAG.BOUNCE;ragVel.x*=RAG.FRIC;ragVel.z*=RAG.FRIC;ragAngVel.multiplyScalar(RAG.FRIC);}
+    for(const b of buildings){
+        const bc=new THREE.Vector3(),bs=new THREE.Vector3();
+        b.box.getCenter(bc); b.box.getSize(bs);
+        const dx=ragPos.x-bc.x,dy=ragPos.y-bc.y,dz=ragPos.z-bc.z;
+        const ox=(bs.x/2+RAG.RAD)-Math.abs(dx),oy=(bs.y/2+RAG.RAD)-Math.abs(dy),oz=(bs.z/2+RAG.RAD)-Math.abs(dz);
+        if(ox>0&&oy>0&&oz>0){
+            if(ox<oy&&ox<oz){ragPos.x+=Math.sign(dx)*ox;ragVel.x=-ragVel.x*RAG.BOUNCE;ragVel.y*=RAG.FRIC;ragVel.z*=RAG.FRIC;}
+            else if(oy<oz){ragPos.y+=Math.sign(dy)*oy;ragVel.y=-ragVel.y*RAG.BOUNCE;ragVel.x*=RAG.FRIC;ragVel.z*=RAG.FRIC;}
+            else{ragPos.z+=Math.sign(dz)*oz;ragVel.z=-ragVel.z*RAG.BOUNCE;ragVel.x*=RAG.FRIC;ragVel.y*=RAG.FRIC;}
+        }
+    }
+    ragdollModel.rotation.x+=ragAngVel.x; ragdollModel.rotation.y+=ragAngVel.y; ragdollModel.rotation.z+=ragAngVel.z;
+    ragAngVel.multiplyScalar(.95);
+    ragdollModel.position.copy(ragPos);
+}
+
+// ── Orders ──
+let activeMission=null, pendingOrders=[], inCutscene=false, isFlying=false;
+let humanWaveT=0, receiveOrders=true;
+
+setInterval(()=>{
+    const before=pendingOrders.length;
+    pendingOrders=pendingOrders.filter(o=>Date.now()<o.expires);
+    if(pendingOrders.length!==before){updateOrdersUI();updateBadge();}
+},1000);
+setInterval(()=>{if(document.getElementById('orders-panel').classList.contains('open'))updateOrdersUI();},1000);
+
+document.getElementById('receive-switch').addEventListener('pointerdown',()=>{
+    receiveOrders=!receiveOrders;
+    document.getElementById('receive-switch').classList.toggle('on',receiveOrders);
+});
+document.getElementById('btn-orders').addEventListener('click',()=>{
+    document.getElementById('shop-panel').classList.remove('open');
+    document.getElementById('orders-panel').classList.toggle('open');
+    updateOrdersUI();
+});
+document.getElementById('btn-shop').addEventListener('click',()=>{
+    document.getElementById('orders-panel').classList.remove('open');
+    document.getElementById('shop-panel').classList.toggle('open');
+    renderShop();
+});
+document.getElementById('btn-orders-close').addEventListener('click',()=>document.getElementById('orders-panel').classList.remove('open'));
+document.getElementById('btn-shop-close').addEventListener('click',()=>document.getElementById('shop-panel').classList.remove('open'));
+
+const fmtTime=ms=>{const s=Math.ceil(ms/1000);return s>=60?Math.floor(s/60)+'m '+(s%60)+'s':s+'s';};
+const rwdCls=r=>r<=150?'reward-low':r<=300?'reward-mid':'reward-high';
+const tmrCls=s=>s>30?'timer-ok':s>10?'timer-warn':'timer-danger';
+
+function generateOrder(){
+    if(!receiveOrders||pendingOrders.length>=CFG.MAX_ORDERS) return;
+    const tier=TIERS[Math.random()*TIERS.length|0];
+    const o={id:Date.now(),name:NAMES[Math.random()*NAMES.length|0],
+        reward:applyBonus(tier.reward),base:tier.reward,label:tier.label,
+        minF:tier.minF,maxF:tier.maxF,isFar:tier.isFar,
+        expires:Date.now()+tier.timer,timerMs:tier.timer};
+    pendingOrders.push(o); updateOrdersUI(); updateBadge();
+    showNotif('New Order! $'+o.reward, o.name+' \u2014 '+o.label+' \u2014 '+fmtTime(tier.timer));
+    playNotifSound();
+}
+
+function updateOrdersUI(){
+    const list=document.getElementById('orders-list'); list.innerHTML='';
+    if(activeMission){
+        const d=document.createElement('div'); d.style.cssText='margin-bottom:12px;text-align:center;';
+        d.innerHTML='<button class="btn-small" style="background:#e74c3c;width:100%;padding:12px;font-size:15px;border-radius:10px;">&#9888; ABANDON DELIVERY</button>';
+        d.querySelector('button').onclick=abandonOrder;
+        list.appendChild(d);
+        const sep=document.createElement('div'); sep.style.cssText='border-top:1px solid #444;margin-bottom:12px;'; list.appendChild(sep);
+    }
+    if(!pendingOrders.length){
+        const e=document.createElement('div'); e.style.cssText='color:#666;text-align:center;margin-top:40px;font-size:16px;';
+        e.textContent='No pending orders...'; list.appendChild(e); return;
+    }
+    pendingOrders.forEach(o=>{
+        const s=Math.max(0,Math.ceil((o.expires-Date.now())/1000));
+        const dis=!!activeMission;
+        const div=document.createElement('div'); div.className='order-card'+(s<=5?' expiring':'');
+        div.innerHTML='<div><b>'+o.name+'</b>'
+            +'<div class="order-reward '+rwdCls(o.reward)+'">$'+o.reward+(o.reward!==o.base?' <span style="font-size:11px;color:#f39c12;">+bonus</span>':'')+'</div>'
+            +'<div class="reward-badge">'+o.label+' distance</div>'
+            +'<div class="order-timer '+tmrCls(s)+'">&#9201; '+s+'s</div></div>'
+            +'<div class="order-btns">'
+            +'<button class="btn-small" style="background:'+(dis?'#555':'#2ecc71')+';cursor:'+(dis?'not-allowed':'pointer')+';" data-id="'+o.id+'">ACCEPT</button>'
+            +'<button class="btn-small" style="background:#e74c3c;" data-del="'+o.id+'">DECLINE</button>'
+            +'</div>';
+        div.querySelector('[data-id]').onclick=()=>acceptOrder(o.id);
+        div.querySelector('[data-del]').onclick=()=>{pendingOrders=pendingOrders.filter(x=>x.id!==o.id);updateOrdersUI();updateBadge();};
+        list.appendChild(div);
+    });
+}
+
+function renderShop(){
+    const content=document.getElementById('shop-content'); content.innerHTML='';
+    const stat=document.createElement('div'); stat.className='shop-stat-box';
+    stat.innerHTML='<div class="big">&#11088; '+credits+'</div><div class="sub">Credits owned</div>'
+        +'<div style="margin-top:8px;color:#f39c12;font-size:16px;">+'+Math.round(creditBonus()*100)+'% on all payouts</div>'
+        +'<div style="color:#888;font-size:11px;margin-top:2px;">Price multiplier: x'+priceMult.toFixed(2)+'</div>';
+    content.appendChild(stat);
+    SHOP.forEach(pkg=>{
+        const price=pkgPrice(pkg); const canAfford=money>=price;
+        const card=document.createElement('div'); card.className='shop-item-card';
+        card.innerHTML='<div><div class="shop-item-name">'+pkg.label+'</div><div class="shop-item-desc">'+pkg.desc+'</div></div>'
+            +'<div style="text-align:right;"><div class="shop-item-price">$'+price+'</div>'
+            +'<button class="btn-small" style="margin-top:6px;background:'+(canAfford?'#e67e22':'#555')+';cursor:'+(canAfford?'pointer':'not-allowed')+';" data-pkgid="'+pkg.id+'">'+(canAfford?'BUY':'No $')+'</button></div>';
+        card.querySelector('[data-pkgid]').onclick=()=>buyCredits(pkg.id);
+        content.appendChild(card);
+    });
+}
+
+function buyCredits(id){
+    const pkg=SHOP.find(p=>p.id===id); if(!pkg) return;
+    const price=pkgPrice(pkg);
+    if(money<price){showPopup('Not enough money!');return;}
+    updateMoney(-price); updateCredits(pkg.credits);
+    priceMult*=1.5; localStorage.setItem('deliveryCreditMult',priceMult);
+    showNotif('Purchased!','+'+pkg.credits+' Credits! Bonus +'+Math.round(creditBonus()*100)+'%. Prices rose 50%.');
+    renderShop();
+}
+
+function abandonOrder(){
+    if(!activeMission) return;
+    activeMission=null; deliveryZone.visible=false;
+    if(humanCustomer) humanCustomer.visible=false;
+    pkgBox.visible=false;
+    if(trailLine){scene.remove(trailLine);trailLine.geometry.dispose();trailLine=null;}
+    document.getElementById('deliver-btn').style.display='none';
+    document.getElementById('tutorial').style.display='block';
+    updateOrdersUI(); updateBadge();
+}
+
+function acceptOrder(id){
+    if(activeMission){showPopup();return;}
+    const o=pendingOrders.find(x=>x.id===id); if(!o||!car) return;
+    let targetPos;
+    if(o.isFar){
+        const angle=Math.random()*Math.PI*2, dist=500+Math.random()*600;
+        const tx=car.position.x+Math.sin(angle)*dist, tz=car.position.z+Math.cos(angle)*dist;
+        const tcx=Math.floor(tx/CFG.CHUNK), tcz=Math.floor(tz/CFG.CHUNK);
+        for(let dx=-2;dx<=2;dx++) for(let dz=-2;dz<=2;dz++) genChunk(tcx+dx,tcz+dz);
+        const tv=new THREE.Vector3(tx,0,tz);
+        let best=null, bestD=Infinity;
+        for(const b of buildings){const d=b.mesh.position.distanceTo(tv);if(d<bestD){bestD=d;best=b;}}
+        targetPos=best?best.mesh.position.clone():tv;
+    } else {
+        const sorted=[...buildings].sort((a,b)=>a.mesh.position.distanceTo(car.position)-b.mesh.position.distanceTo(car.position));
+        const si=Math.floor(o.minF*sorted.length), ei=Math.max(si,Math.floor(o.maxF*sorted.length)-1);
+        const pool=sorted.slice(si,ei+1);
+        targetPos=(pool.length?pool[Math.random()*pool.length|0]:buildings[0]).mesh.position.clone();
+    }
+    activeMission={...o,pos:targetPos};
+    pendingOrders=pendingOrders.filter(x=>x.id!==id);
+    updateOrdersUI(); updateBadge();
+    document.getElementById('orders-panel').classList.remove('open');
+
+    const zone=findClearSpot(targetPos);
+    deliveryZone.position.set(zone.x,.1,zone.z); deliveryZone.visible=true;
+    if(humanCustomer){
+        // Randomize NPC color each delivery
+        applyColor(humanCustomer, NPC_COLORS[Math.floor(Math.random()*NPC_COLORS.length)]);
+        const cust=findClearSpot(zone.clone().add(new THREE.Vector3(4,0,0)));
+        humanCustomer.position.copy(cust); humanCustomer.lookAt(zone);
+        humanCustomer.visible=true; humanWaveT=0;
+    }
+    document.getElementById('tutorial').style.display='none';
+}
+
+// ── Delivery cutscene ──
+document.getElementById('deliver-btn').addEventListener('click',()=>{
+    inCutscene=true;
+    document.getElementById('deliver-btn').style.display='none';
+    document.getElementById('blackout').style.opacity='1';
+    setTimeout(()=>{
+        if(player){
+            player.visible=true;
+            player.position.set(car?car.position.x:0,0,car?car.position.z:0);
+            applyColor(player,charColor);
+        }
+        pkgBox.visible=true;
+        document.getElementById('blackout').style.opacity='0';
+        let walkT=0;
+        const dest=humanCustomer
+            ?humanCustomer.position.clone().add(new THREE.Vector3(-2,0,0))
+            :deliveryZone.position.clone();
+        const iv=setInterval(()=>{
+            walkT+=.2; if(!player) return;
+            player.position.lerp(dest,.05);
+            if(humanCustomer) player.lookAt(humanCustomer.position);
+            const fwd=new THREE.Vector3(0,0,.7).applyQuaternion(player.quaternion);
+            pkgBox.position.copy(player.position).addScaledVector(fwd,1).add(new THREE.Vector3(0,1.1,0));
+            if(walkBones.LeftUpLeg)  walkBones.LeftUpLeg.rotation.x  = Math.sin(walkT)*.6;
+            if(walkBones.RightUpLeg) walkBones.RightUpLeg.rotation.x =-Math.sin(walkT)*.6;
+            if(walkBones.LeftArm)    walkBones.LeftArm.rotation.x    =-Math.sin(walkT)*.4;
+            if(walkBones.RightArm)   walkBones.RightArm.rotation.x   = Math.sin(walkT)*.4;
+            if(player.position.distanceTo(dest)<.5){
+                clearInterval(iv);
+                setTimeout(()=>{
+                    document.getElementById('blackout').style.opacity='1';
+                    setTimeout(()=>{
+                        updateMoney(activeMission?activeMission.reward:150);
+                        activeMission=null; inCutscene=false;
+                        deliveryZone.visible=false;
+                        if(humanCustomer) humanCustomer.visible=false;
+                        if(player) player.visible=false;
+                        pkgBox.visible=false;
+                        document.getElementById('blackout').style.opacity='0';
+                        document.getElementById('tutorial').style.display='block';
+                        if(trailLine){scene.remove(trailLine);trailLine.geometry.dispose();trailLine=null;}
+                        updateOrdersUI(); updateBadge();
+                    },800);
+                },1000);
+            }
+        },16);
+    },600);
+});
+
+// ── Reset data ──
+let confirmStep=0;
+function startReset(){
+    confirmStep=1;
+    document.getElementById('confirm-msg').innerHTML='This will erase ALL money, credits and progress.<br>Are you sure?';
+    document.getElementById('confirm-yes').textContent='Yes, Delete';
+    document.getElementById('confirm-overlay').classList.add('show');
+}
+document.getElementById('btn-reset').addEventListener('click',startReset);
+document.getElementById('reset-btn').addEventListener('click',startReset);
+document.getElementById('confirm-yes').addEventListener('click',()=>{
+    if(confirmStep===1){
+        confirmStep=2;
+        document.getElementById('confirm-msg').innerHTML='<span style="color:#e74c3c">FINAL WARNING</span> — everything gone forever.';
+        document.getElementById('confirm-yes').textContent='DELETE EVERYTHING';
+    } else if(confirmStep===2){
+        ['deliveryMoney','deliveryCredits','deliveryCreditMult'].forEach(k=>localStorage.removeItem(k));
+        location.reload();
+    }
+});
+document.getElementById('confirm-no').addEventListener('click',()=>{
+    confirmStep=0; document.getElementById('confirm-overlay').classList.remove('show');
+});
+window.addEventListener('keydown',e=>{
+    if(e.code==='ShiftRight'&&!document.getElementById('confirm-overlay').classList.contains('show')) startReset();
+});
+
+// ── Pause ──
+let paused=false;
+document.getElementById('btn-pause').addEventListener('click',()=>{
+    paused=true; document.getElementById('pause-overlay').style.display='flex';
+});
+document.getElementById('btn-resume').addEventListener('click',()=>{
+    paused=false; document.getElementById('pause-overlay').style.display='none';
+});
+document.getElementById('btn-go-menu').addEventListener('click',goToMenu);
+
+function goToMenu(){
+    paused=false;
+    document.getElementById('pause-overlay').style.display='none';
+    if(activeMission) abandonOrder();
+    renderer.domElement.style.display='none';
+    document.getElementById('controls').style.display='none';
+    document.getElementById('reset-btn').style.display='none';
+    ['top-ui','btn-pause','top-right-btns','orders-badge','orders-panel','shop-panel','deliver-btn'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.style.display='none';
+    });
+    document.getElementById('menu-screen').style.display='flex';
+    currentScreen='menu';
+    speed=0; isFlying=false; ragActive=false;
+    if(ragdollModel) ragdollModel.visible=false;
+    if(car){car.position.set(0,0,0);car.rotation.y=0;car.visible=true;}
+    carAngle=0;
+}
+
+// ── Start game ──
+let currentScreen='menu';
+let orderIntervalStarted=false;
+
+function startGame(){
+    currentScreen='game';
+    startBgMusic();
+    document.getElementById('menu-screen').style.display='none';
+    renderer.domElement.style.display='block';
+    document.getElementById('controls').style.display='flex';
+    document.getElementById('reset-btn').style.display='block';
+    ['top-ui','btn-pause','top-right-btns','orders-badge'].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.style.removeProperty('display');
+    });
+    updateMoney(0); updateCredits(0);
+    if(!orderIntervalStarted){
+        orderIntervalStarted=true;
+        setInterval(generateOrder,CFG.ORDER_IV);
+        setTimeout(generateOrder,3000);
+    }
+}
+document.getElementById('btn-play').addEventListener('click',startGame);
+
+// ── Input ──
+const keys={};
+let speed=0, carAngle=0, camYaw=0, camPitch=.4, isDragging=false, autoFollow=true;
+
+const setupBtn=(id,k)=>{
+    const el=document.getElementById(id);
+    el.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true;autoFollow=true;});
+    el.addEventListener('pointerup',e=>{e.preventDefault();keys[k]=false;});
+};
+setupBtn('btn-up','KeyW'); setupBtn('btn-down','KeyS');
+setupBtn('btn-left','KeyA'); setupBtn('btn-right','KeyD');
+window.addEventListener('keydown',e=>{if(currentScreen==='game') keys[e.code]=true;});
+window.addEventListener('keyup',e=>{keys[e.code]=false;});
+renderer.domElement.addEventListener('pointerdown',()=>{isDragging=true;autoFollow=false;});
+window.addEventListener('pointerup',()=>isDragging=false);
+window.addEventListener('pointermove',e=>{
+    if(isDragging&&currentScreen==='game'){
+        camYaw-=e.movementX*.007;
+        camPitch=Math.max(.1,Math.min(1.2,camPitch+e.movementY*.007));
+    }
+});
+
+// ── Update ──
+let humanWaveTg=0;
+function update(){
+    if(!car||paused) return;
+    updateExps(); updateRagdoll(); updateChunks();
+
+    // Customer wave animation
+    if(humanCustomer&&humanCustomer.visible){
+        humanWaveTg+=.07;
+        const ra=waveBones['RightArm'],rf=waveBones['RightForeArm'];
+        const ll=waveBones['LeftUpLeg'],rl=waveBones['RightUpLeg'];
+        if(ra) ra.rotation.z=Math.sin(humanWaveTg)*.7-.4;
+        if(rf) rf.rotation.z=Math.sin(humanWaveTg*1.2)*.3;
+        if(ll) ll.rotation.x= Math.sin(humanWaveTg*.4)*.04;
+        if(rl) rl.rotation.x=-Math.sin(humanWaveTg*.4)*.04;
+    }
+
+    if(!inCutscene&&!isFlying&&!ragActive){
+        if(keys['KeyW']) speed+=CFG.ACCEL;
+        if(keys['KeyS']) speed-=CFG.ACCEL;
+        speed*=CFG.FRIC;
+        const sf=Math.min(1.0,Math.abs(speed)/.15), sd=speed>=0?1:-1;
+        if(keys['KeyA']) carAngle+=CFG.STEER*sd*sf*steerSens;
+        if(keys['KeyD']) carAngle-=CFG.STEER*sd*sf*steerSens;
+        car.rotation.y=carAngle;
+        const prev=car.position.clone();
+        car.position.x+=Math.sin(carAngle)*speed;
+        car.position.z+=Math.cos(carAngle)*speed;
+        const carBox=new THREE.Box3().setFromObject(car);
+        for(const b of buildings){
+            if(carBox.intersectsBox(b.box)){
+                if(Math.abs(speed)>CFG.CRASH_THR){
+                    spawnExp(car.position); car.visible=false; isFlying=true;
+                    launchRagdoll(car.position.clone(),Math.sin(carAngle)*speed*5,Math.cos(carAngle)*speed*5);
+                } else {car.position.copy(prev);speed*=-.5;}
+                break;
+            }
+        }
+        if(activeMission){
+            updateTrail();
+            const d=car.position.distanceTo(deliveryZone.position);
+            document.getElementById('deliver-btn').style.display=(d<CFG.DELIVER_R&&Math.abs(speed)<.1)?'block':'none';
+        } else {
+            if(trailLine){scene.remove(trailLine);trailLine.geometry.dispose();trailLine=null;}
+        }
+    }
+
+    const camTgt=ragActive?ragPos:car.position;
+    if(autoFollow){
+        const ty=carAngle+Math.PI; let diff=ty-camYaw;
+        while(diff<-Math.PI)diff+=Math.PI*2; while(diff>Math.PI)diff-=Math.PI*2;
+        camYaw+=diff*.1; camPitch+=(.4-camPitch)*.1;
+    }
+    camera.position.set(
+        camTgt.x+Math.sin(camYaw)*camDist*Math.cos(camPitch),
+        camTgt.y+Math.sin(camPitch)*camDist,
+        camTgt.z+Math.cos(camYaw)*camDist*Math.cos(camPitch)
+    );
+    camera.lookAt(camTgt.x,camTgt.y+3,camTgt.z);
+}
+
+// ── Animate ──
+function animate(){
+    requestAnimationFrame(animate);
+    if(menuRenderer && menuScene && menuCam){
+        if(menuChar){
+            if(menuSpin) menuRotY+=.012;
+            menuChar.rotation.y=menuRotY;
+        }
+        menuRenderer.render(menuScene,menuCam);
+    }
+    if(currentScreen==='game'){
+        update();
+        renderer.render(scene,camera);
+    }
+}
+animate();
+
+window.addEventListener('resize',()=>{
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    if(menuRenderer && menuCam && menuWrap){
+        const mw=menuW(), mh=menuH();
+        menuRenderer.setSize(mw,mh);
+        menuWrap.style.width=mw+'px'; menuWrap.style.height=mh+'px';
+        menuCam.aspect=mw/mh; menuCam.updateProjectionMatrix();
+    }
+});
+</script>
+</body>
+</html>
